@@ -1,0 +1,17 @@
+{{define "defaulthead"}}
+<head>
+    {{if not .}}
+    <title>RJ's Site</title>
+    {{else}}
+    <title>{{.}}'s Site</title>
+    {{end}}
+    <link rel="shortcut icon" type="image/png" href="public/images/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
+    <link rel="stylesheet" href="public/stylesheets/bootstrap.min.css">
+    <script src="public/javascript/jquery-3.2.1.slim.min.js"></script>
+    <script src="public/javascript/tether.min.js"></script>
+    <script src="public/javascript/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="public/stylesheets/style.css">
+    <link href="https://fonts.googleapis.com/css?family=Oswald" type="text/css" rel="stylesheet">
+</head>
+{{end}}

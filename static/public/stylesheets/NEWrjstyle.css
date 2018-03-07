@@ -1,0 +1,251 @@
+/*back in time*/
+*{
+  font-family: Oswald;
+}
+
+html{
+  background-color: #000000; 
+}
+
+body{
+  width: 88%;
+  height: 100%;
+  margin: 0 auto;
+  background: -webkit-linear-gradient(#99ddff, #99ddff);
+  background: -moz-linear-gradient(#99ddff, #99ddff);
+  background: -o-linear-gradient(#99ddff, #99ddff);
+}
+
+header{
+  font-size: 500%;
+  font-weight: 300;
+  color: #000000;
+  font-family: Oswald;
+  background-color: #00ccff;
+  border-top: solid 1px;
+  border-bottom: solid 1px;
+  text-align: center;
+  letter-spacing: 15px;
+}
+
+#header{
+  text-decoration: none;
+}
+
+nav{
+  font-size: 250%;
+  font-weight: 300;
+  color: #000000;
+  font-family: Oswald;
+  background-color: #11ddff;
+  border-bottom: solid 1px;
+  text-align: center;
+}
+
+a.nav{
+  text-decoration: none;
+  color: #000000;
+}
+
+#toAbout:hover, #toWorks:hover, #toContact:hover{
+  color: #ffffff;
+}
+
+#toAbout:active, #toWorks:active, #toContact:active{
+  color: #aaffff;
+}
+
+div.submain{
+  margin: 0 auto;
+}
+
+#rjphoto{
+  border-right: solid 1px;
+  vertical-align: middle;
+  width: 100%;
+}
+
+div.imgAlign{
+  width: 40%;
+  display: inline-block;
+  position: relative;
+  z-index: 2;
+}
+
+div.main{
+  width: 100%;
+}
+
+div.other-main{
+  width: 90%;
+  padding: 5% 5% 5% 5%;
+}
+
+div.contact-links{
+  height: 100%;
+  margin-bottom: 5%;
+  text-align: center;
+}
+
+a.social-links{
+  text-decoration: none;
+  color: #000000;
+  display: block;
+  vertical-align: top;
+  font-size: 250%;
+  width: 90%;
+  margin: 0 auto;
+}
+
+a.social-links:hover{
+  color: #ffffff;
+}
+
+a.social-links:active{
+  color: #aaffff;
+}
+
+img.center{
+  display: block;
+  margin: 0 auto;  
+}
+
+#snapcode{
+  width: 50%;
+}
+
+#about-me{
+  font-size: 150%;
+}
+
+div.to-nav{
+  margin-left: -4px;
+  width: 60%;
+  display: inline-block;
+  vertical-align: top;
+  position: relative;
+  z-index: 1;
+}
+
+div.to-nav:hover, div.to-nav:active{
+  z-index: 3;
+}
+
+a.main-nav{
+  display: block;
+  font-size: 250%;
+  font-weight: 300;
+  width: 100%;
+  color: #000000;
+  background-color: #11ddff;
+  text-align: center;
+  text-decoration: none;
+  border-bottom: solid 1px;
+  border-left: solid 1px;
+}
+
+#navAbout:hover, #navWorks:hover, #navContact:hover{
+  border-color: #000000;
+  color: #ffffff;
+  border: solid #ffffff;
+}
+
+#navAbout:active, #navWorks:active, #navContact:active{
+  color: #aaffff;
+  border: solid #aaffff;
+}
+
+div.flexing{
+  margin-right: 5%;
+  margin-left: 5%;
+  width: 90%;
+}
+
+#brief{
+  font-size: 200%;
+}
+
+div.foot-main{
+  margin-top: 1%;
+  height: 100%;
+}
+
+footer{
+  background: -webkit-linear-gradient(#99ddff, #ffffff);
+  background: -moz-linear-gradient(#99ddff, #ffffff);
+  background: -o-linear-gradient(#99ddff, #ffffff);
+  color: #36455C;
+  border-color: #000000;
+  font-family: Oswald;
+  border-top: solid 1px;
+}
+
+table.foot-info{
+  margin: 0 auto;
+  width: 40%;
+  text-align: left;
+  font-size: 80%;
+  white-space: nowrap;
+  overflow: scroll;
+}
+
+th, td {
+  padding: 0 5%;
+}
+
+#more{
+  text-decoration: none;
+  color: #36455C;
+}
+
+#more:hover{
+  color: #ffffff;
+}
+
+#more:active{
+  color: #aaffff;
+}
+
+#zecmon{
+	width: 100%;
+}
+img.conIm{
+}
+
+div.itCon{
+  width: 40%;
+  border: solid #ffffff;
+}
+
+p.itCon{
+  text-align: center;
+}
+
+a.itCon{
+  
+}
+
+a.DL{
+  text-decoration: none;
+  color: #ffffff;
+}
+
+div.inWr{
+  display: inline-block;
+  vertical-align: top;
+  width: 50%;
+  margin-left: -5px;
+}
+
+p.conWr{
+}
+
+img.conWr{
+  margin-right: 4%;
+  display: inline-block;
+}
+
+p.error{
+  text-align: center;
+  font-size: 700%;
+}

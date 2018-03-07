@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+{{template "defaulthead"}}
+<body>
+{{template "header"}}
+<div class="container-fluid">
+    <div class="row no-gutters">
+        <img alt="Spy Image" src="data:image/png;base64,{{.}}"/>
+    </div>
+</div>
+{{template "footer"}}
+<!--div.super-spacer-->
+<script type="text/javascript">
+    function getWS() {
+        var socket = new WebSocket("ws://therileyjohnson.com/spying");
+        return socket;
+    }
+</script>
+</body>
+</html>

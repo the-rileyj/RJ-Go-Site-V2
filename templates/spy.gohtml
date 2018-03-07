@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+    {{template "defaulthead"}}
+    <body>
+        {{template "header"}}
+        <div class="container-fluid">
+            <div class="row no-gutters">
+                <div class="col-sm-1">
+                </div>
+                <div class="col-sm-10">
+                    <canvas id="canvas"></canvas>
+                </div>
+                <div class="col-sm-1">
+                </div>
+            </div>
+            <div class="row no-gutters">
+                <div class="col-sm-1">
+                </div>
+                <div class="col-sm-10">
+                    <div id="desc">
+                        Initializing
+                    </div>
+                    <button id="stream">
+                        Stream
+                    </button>
+                </div>
+                <div class="col-sm-1">
+                </div>
+            </div>
+            <div class="row no-gutters">
+                <div class="col-sm-1">
+                </div>
+                <div class="col-sm-5">
+                    <button id="hflip">
+                        Horizontal Flip
+                    </button>
+                </div>
+                <div class="col-sm-5">
+                    <button id="vflip">
+                        Vertical Flip
+                    </button>
+                </div>
+                <div class="col-sm-1">
+                </div>
+            </div>
+            <div class="row no-gutters">
+                <div class="col-sm-1">
+                </div>
+                <div class="col-sm-10">
+                    {{template "rchatbox" "raspicam"}}
+                </div>
+                <div class="col-sm-1">
+                </div>
+            </div>
+        </div>
+        {{template "footer"}}
+        <!--div.super-spacer-->
+        {{template "rchatbox-javascript"}}
+        <script type="text/javascript">
+            var lupdate = undefined, strm = false, spy = $("#spy"), desc = $("#desc"), stream = $("#stream"), canvas = document.getElementById("canvas"), ctx = canvas.getContext("2d"), background = new Image(), hflip = $("#hflip"), vflip = $("#vflip"), hf = false, vf = false;
+            ctx.canvas.width = 2592;
+            ctx.canvas.height = 1944;
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            function getWS() {
+                var socket = new WebSocket("ws://" + window.location.host + "/wsspy");
+                socket.onclose = function(){
+                    desc.contents().remove();
+                    desc.append("Disonnected");
+                };
+                socket.onopen = function(){
+                    desc.contents().remove();
+                    desc.append("Connected");
+                };
+                socket.onmessage = function(msg){
+                    if (strm) {
+                        lupdate = new Date();
+                        var obj = JSON.parse(msg.data);
+                        if (obj.pi) {
+                            nobj = {"pi":false, "message":""};
+                            if (vf) {
+                                nobj.message += "vflip;";
+                            }
+                            if (hf) {
+                                nobj.message += "hflip";
+                            }
+                            ws.send(JSON.stringify(nobj));
+                            background.src = "http://www.therileyjohnson.com/public/images/cap.jpg?" + String(Math.floor(Math.random() * 10)) + String(Math.floor(Math.random() * 10)) + String(Math.floor(Math.random() * 10)) + String(Math.floor(Math.random() * 10)) + String(Math.floor(Math.random() * 10)) + String(Math.floor(Math.random() * 10));
+                        }
+                    }
+                };
+                return socket;
+            }
+            setInterval(function() {
+                ctx.drawImage(background, 0, 0);
+            }, 250);
+            setInterval(function() {
+                if(strm) {
+                    var cupdate = new Date(lupdate + 5000), now = new Date();
+                    if(cupdate < now) {
+                        nobj = {"pi":false, "message":""};
+                        if (vf) {
+                            nobj.message += "vflip;";
+                        }
+                        if (hf) {
+                            nobj.message += "hflip";
+                        }
+                        lupdate = new Date();
+                        ws.send(JSON.stringify(nobj));
+                    }
+                }
+            }, 250);
+            var ws = getWS();
+            stream.click(function() {
+                strm = !strm;
+                if (strm) {
+                    ws.send(JSON.stringify({"pi":false, "message":""}));
+                    stream.css("background-color", "green");
+                } else {
+                    stream.css("background-color", "red");
+                }
+            })
+            hflip.click(function() {
+                hf = !hf;
+                if (hf) {
+                    hflip.css("background-color", "green");
+                } else {
+                    hflip.css("background-color", "red");
+                }
+            })
+            vflip.click(function() {
+                vf = !vf;
+                if (vf) {
+                    vflip.css("background-color", "green");
+                } else {
+                    vflip.css("background-color", "red");
+                }
+            })
+        </script>
+    </body>
+</html>

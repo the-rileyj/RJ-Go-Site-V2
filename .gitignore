@@ -1,0 +1,7 @@
+.idea/
+outer.txt
+debug
+nohup.out
+*.png
+*.jpg
+*.exe

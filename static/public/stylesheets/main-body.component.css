@@ -1,0 +1,191 @@
+div.parallax {
+  background-image: url("../../../../Downloads/Assorted_Apps/JavaScript/Angular/ang_boi/ang-ayy-app/src/assets/background_init.jpg");
+
+  /* Set a specific height */
+  height: 500px;
+
+  /* Create the parallax scrolling effect */
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  padding-bottom: 10rem;
+}
+
+/*p.parallax, p.parallax-item{
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  text-align: center;
+  font-family: Montserrat;
+}*/
+
+p.parallax{
+  margin-top: 15rem;
+  margin-bottom: -18rem;
+  margin-left: 2rem;
+  letter-spacing: .055rem;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  text-align: left;
+  font-family:  sans-serif, Montserrat;
+  color: black;
+  font-size: 1.5rem;
+  width: 20rem;
+}
+/*p.parallax-item{
+  letter-spacing: .1rem;
+  font-size: 2rem;
+  font-weight: 600;
+}*/
+div.descriptors{
+  width: 15rem;
+  display: inline-block;
+  margin-right: 1rem;
+  vertical-align: top;
+}
+div.descriptors-wrap{
+  margin: 0 auto;
+  margin-top: 1rem;
+}
+hr.descriptors{
+  width: 15rem;
+}
+div.stretch-quote{
+
+}
+p.heading-descriptors{
+  font-family: Oswald, "Times New Roman", Serif;
+  text-align: center;
+  font-weight: 600;
+}
+p.desc-descriptors{
+  font-family:  sans-serif, Montserrat;
+  text-align: left;
+}
+p.time{
+  margin-top: -1.3rem;
+  white-space: pre-line;
+  text-align: center;
+}
+/*For Quotage:*/
+div.major-quote{
+  background-color: #373a3c;
+  height: auto;
+}
+p.major-quote{
+  text-align: center;
+  font-family: Oswald;
+  font-size: 3.5rem;
+  padding-left: 2.5rem;
+  padding-right: 2.5rem;
+  padding-top: 1.5rem;
+  color: #ffffff;
+}
+p.quoter{
+  text-align: center;
+  font-family:  sans-serif, Montserrat;
+  padding-bottom: 1.5rem;
+  color: #000000;
+}
+div.album_of_week{
+  text-align: center;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+p.album_of_week_sum{
+  font-family: Oswald;
+  font-weight: 200;
+  margin: 0 auto;
+  font-size: 2rem;
+}
+p.album_of_week_title{
+  margin: 0 auto;
+  font-family:  sans-serif, Montserrat;
+}
+p.album_of_week_description{
+  margin: 0 auto;
+  padding-bottom: 2rem;
+  font-family:  sans-serif, Montserrat;
+}
+hr.album_of_week{
+  color: #000000;
+  background-color: #000000;
+}
+div.album_of_week_parallax{
+  background-image: url("https://lh3.googleusercontent.com/UZvKkkGzTAWRQOxAb__5XbVuuOs932zqtE-Ddg2EI5NYKlLLzFPaGPeL5cwx-Jwbh1iHx8YMUpv9lGRDyL0=s1600");
+  /* Set a specific height */
+  height: 5rem;
+  /* Create the parallax scrolling effect */
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  padding-bottom: 25rem;
+}
+div.map-container{
+  background-color: #000000;
+  width: 100%;
+  margin-top: -2rem;
+  padding-bottom: -4rem;
+}
+div.map-container-text{
+  vertical-align: top;
+  text-align: center;
+}
+div.map-container-map{
+  height: 25rem;
+}
+p.map-container-title{
+  font-size: 3rem;
+  color: #ffffff;
+}
+hr.map-container{
+  width: 20rem;
+  color: #ffffff;
+  background-color: #ffffff;
+}
+p.map-container-desc{
+  color: #ffffff;
+  text-align: center;
+}
+div.meet-people-wrapper{
+  background-color: black;
+  padding-top: 2rem;
+  width: 100%;
+}
+div.meet-people{
+  background-color: black;
+}
+div.meet-people-row{
+}
+img.meet-people{
+  width: 100%;
+}
+p.meet-people{
+  color: white;
+  font-family:  sans-serif, Montserrat;
+}
+div.photo-gal{
+  margin-bottom: 0;
+  height: 20rem;
+  width: 100%;
+  display: block;
+  background-position: center;
+  /* Make the background image cover the area of the <div>, and clip the excess */
+  background-attachment: fixed;
+  background-size: cover;
+  background-repeat: no-repeat;
+  margin: 0;
+}
+p.meet-people{
+  text-align: center;
+  color: white;
+  font-size: 2rem;
+}
+img.photo-gal{
+  margin: 0;
+}
