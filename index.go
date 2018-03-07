@@ -107,14 +107,6 @@ func chat(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func spy(w http.ResponseWriter, r *http.Request) {
-	tpl.ExecuteTemplate(w, "spy.gohtml", nil)
-}
-
-func spydemo(w http.ResponseWriter, r *http.Request) {
-	tpl.ExecuteTemplate(w, "spydemo.gohtml", nil)
-}
-
 func sms(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(1, r.URL.Query()["AccountSid"])
 	fmt.Println(2, r.URL.Query()["accountsid"])
@@ -246,20 +238,22 @@ func init() {
 	if err == nil {
 		json.Unmarshal(fi, &vT)
 	} else {
-		/*print("Error reading traffic data")
-		os.Exit(1)*/
-		vT = visiTracker{0, 0, 0, []string{}}
+		vT = visiTracker{0, 0, []string{}}
 	}
-	tpl = template.Must(template.New("").Funcs(template.FuncMap{"snapCode": getSnap, "getIter": getIter}).ParseGlob("templates/*.gohtml"))
+
+	tpl = template.Must(template.New("").Funcs(template.FuncMap{"snapCode": getSnap}).ParseGlob("templates/*.gohtml"))
 
 	var information info
-	fi, err = ioutil.ReadFile("../keys.json")
-	if err != nil {
+
+	if fi, err = ioutil.ReadFile("../keys.json"); err != nil {
 		log.Fatal("Error reading keys data")
+	} else {
+		json.Unmarshal(fi, &information)
 	}
-	json.Unmarshal(fi, &information)
+
 	mg = mailgun.NewMailgun(information.MailServer, information.Private, information.Public)
 	mEmail = information.MyEmail
+
 	if information.Production {
 		port = information.ProPort
 	} else {
@@ -280,8 +274,6 @@ func main() {
 	http.HandleFunc("/herdspin", herdSpin)
 	http.HandleFunc("/public/", serveFile)
 	http.HandleFunc("/sms", sms)
-	http.HandleFunc("/spy", spy)
-	http.HandleFunc("/demo", spydemo)
 	http.HandleFunc("/wschat", func(w http.ResponseWriter, r *http.Request) {
 		mc.HandleRequest(w, r)
 	})
@@ -291,39 +283,9 @@ func main() {
 	http.HandleFunc("/wsspy", func(w http.ResponseWriter, r *http.Request) {
 		mp.HandleRequest(w, r)
 	})
-	mp.HandleMessage(func(s *melody.Session, msg []byte) {
-		var mssg message
-		err := json.Unmarshal(msg, &mssg)
-		if err != nil {
-			fmt.Println("Error unmarshalling JSON", err)
-		}
-
-		if mssg.Pi {
-			mux.Lock()
-			pIngress = true
-			mux.Unlock()
-			if err = mp.BroadcastOthers(msg, s); err != nil {
-				fmt.Println("Error Broadcasting to Others", err)
-			}
-		} else {
-			mux.Lock()
-			bIngress := pIngress
-			tIngress := lIngress
-			mux.Unlock()
-			if bIngress || time.Now().After(tIngress.Add(time.Second*3)) {
-				mux.Lock()
-				lIngress = time.Now()
-				pIngress = false
-				mux.Unlock()
-				if err = mp.BroadcastOthers(msg, s); err != nil {
-					fmt.Println("Error Broadcasting to Others", err)
-				}
-			}
-		}
-	})
-	r.Run(":9900")
-	// err := http.ListenAndServe(port, nil)
-	// if err != nil {
-	// 	log.Fatal("ListenAndServe: ", err)
-	// }
+	//r.Run(":9900")
+	err := http.ListenAndServe(port, nil)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
 }
