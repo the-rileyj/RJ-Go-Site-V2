@@ -19,9 +19,6 @@ import (
 	mailgun "gopkg.in/mailgun/mailgun-go.v1"
 )
 
-//Notes:
-//Influences From:
-
 //Function for determining which snapcode will show on the template
 func getSnap() string {
 	if rand.Intn(2) == 1 {
@@ -30,9 +27,14 @@ func getSnap() string {
 	return "snapcode_casher"
 }
 
-//Function for determining which snapcode will show on the template
-func getSides(i int) string {
-	return string((12 - i) / 2)
+//This, isPrivateSubnet, getIPAdress, and ipRange are from: https://husobee.github.io/golang/ip-address/2015/12/17/remote-ip-go.html
+//inRange - check to see if a given ip address is within a range given
+func inRange(r ipRange, ipAddress net.IP) bool {
+	// strcmp type byte comparison
+	if bytes.Compare(ipAddress, r.start) >= 0 && bytes.Compare(ipAddress, r.end) < 0 {
+		return true
+	}
+	return false
 }
 
 // isPrivateSubnet - check to see if this ip is in a private subnet
@@ -75,6 +77,12 @@ func getIPAdress(r *http.Request) string {
 	return ""
 }
 
+func executeTemplate(w http.ResponseWriter, t string, d interface{}) {
+	if err := tpl.ExecuteTemplate(w, t, d); err != nil {
+		print(err)
+	}
+}
+
 func writeStructToJSON(strct interface{}, path string) {
 	res, err := json.Marshal(strct)
 	if err != nil {
@@ -93,28 +101,16 @@ func (vT *visiTracker) InSlice(a string) bool {
 	return false
 }
 
-func herdSpin(w http.ResponseWriter, r *http.Request) {
-	err := tpl.ExecuteTemplate(w, "herdspin.gohtml", vT)
-	if err != nil {
-		print(err)
-	}
+func chat(c *gin.Context) { executeTemplate(c.Writer, "chat.gohtml", vT) }
+
+func sms(c *gin.Context) {
+	fmt.Println(1, c.Request.URL.Query()["AccountSid"])
+	fmt.Println(2, c.Request.URL.Query()["accountsid"])
 }
 
-func chat(w http.ResponseWriter, r *http.Request) {
-	err := tpl.ExecuteTemplate(w, "chat.gohtml", vT)
-	if err != nil {
-		print(err)
-	}
-}
-
-func sms(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(1, r.URL.Query()["AccountSid"])
-	fmt.Println(2, r.URL.Query()["accountsid"])
-}
-
-func serveFile(w http.ResponseWriter, r *http.Request) {
-	if strings.HasSuffix(r.URL.Path, "rjResume.pdf") {
-		addr := getIPAdress(r)
+func serveFile(c *gin.Context) {
+	if strings.HasSuffix(c.Request.URL.Path, "rjResume.pdf") {
+		addr := getIPAdress(c.Request)
 		mux.Lock()
 		seen := resumeRequesters[addr]
 		resumeRequesters[addr]++
@@ -128,35 +124,22 @@ func serveFile(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	http.ServeFile(w, r, "./static"+r.URL.Path)
+	http.ServeFile(c.Writer, c.Request, "./static"+c.Request.URL.Path)
 }
 
-func index(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Query()["check"] == nil {
+func index(c *gin.Context) {
+	if c.Request.URL.Query()["check"] == nil {
 		mux.Lock()
 		vT.V++
-		if getIPAdress(r) != "" && !vT.InSlice(getIPAdress(r)) {
+		if ip := getIPAdress(c.Request); ip != "" && !vT.InSlice(ip) {
 			vT.Uv++
-			vT.IPList = append(vT.IPList, getIPAdress(r))
+			vT.IPList = append(vT.IPList, ip)
 		}
 		mux.Unlock()
 		go writeStructToJSON(vT, "../numer.json")
 	}
 
-	err := tpl.ExecuteTemplate(w, "index.gohtml", vT)
-	if err != nil {
-		print(err)
-	}
-}
-
-//This, isPrivateSubnet, getIPAdress, and ipRange are from: https://husobee.github.io/golang/ip-address/2015/12/17/remote-ip-go.html
-//inRange - check to see if a given ip address is within a range given
-func inRange(r ipRange, ipAddress net.IP) bool {
-	// strcmp type byte comparison
-	if bytes.Compare(ipAddress, r.start) >= 0 && bytes.Compare(ipAddress, r.end) < 0 {
-		return true
-	}
-	return false
+	executeTemplate(c.Writer, "index.gohtml", vT)
 }
 
 //ipRange - a structure that holds the start and end of a range of ip addresses
@@ -227,9 +210,6 @@ var mux sync.Mutex
 var mg mailgun.Mailgun
 var mEmail, port string
 var resumeRequesters map[string]int
-var spyImg []byte
-var pIngress = true
-var lIngress time.Time
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
@@ -264,28 +244,15 @@ func init() {
 func main() {
 	r := gin.Default()
 	mc := melody.New()
-	mp := melody.New()
-	r.GET("/a", func(c *gin.Context) {
-		fmt.Println(c.Request.URL.Path)
-		fmt.Println(c.Request.URL.Query()["check"])
-	})
-	http.HandleFunc("/", index)
-	http.HandleFunc("/chat", chat)
-	http.HandleFunc("/herdspin", herdSpin)
-	http.HandleFunc("/public/", serveFile)
-	http.HandleFunc("/sms", sms)
-	http.HandleFunc("/wschat", func(w http.ResponseWriter, r *http.Request) {
-		mc.HandleRequest(w, r)
+	r.GET("/", index)
+	r.GET("/chat", chat)
+	r.GET("/public/", serveFile)
+	r.GET("/sms", sms)
+	r.GET("/wschat", func(c *gin.Context) {
+		mc.HandleRequest(c.Writer, c.Request)
 	})
 	mc.HandleMessage(func(s *melody.Session, msg []byte) {
 		mc.Broadcast(msg)
 	})
-	http.HandleFunc("/wsspy", func(w http.ResponseWriter, r *http.Request) {
-		mp.HandleRequest(w, r)
-	})
-	//r.Run(":9900")
-	err := http.ListenAndServe(port, nil)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
-	}
+	log.Fatal(r.Run(port))
 }
