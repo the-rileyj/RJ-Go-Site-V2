@@ -10,14 +10,79 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"os"
+	"path"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/olahol/melody"
 	mailgun "gopkg.in/mailgun/mailgun-go.v1"
 )
+
+type rjFileSystem struct {
+	http.FileSystem
+	root    string
+	indexes bool
+}
+
+func (l *rjFileSystem) Exists(prefix string, filepath string) bool {
+	if p := strings.TrimPrefix(filepath, prefix); len(p) < len(filepath) {
+		name := path.Join(l.root, p)
+		fmt.Println(name)
+		_, err := os.Stat(name)
+		if err != nil {
+			return false
+		}
+
+		return true
+	}
+	return false
+}
+
+func NewRjFileSystem(root string) *rjFileSystem {
+	return &rjFileSystem{
+		FileSystem: gin.Dir(root, true),
+		root:       root,
+		indexes:    true,
+	}
+}
+
+// Static returns a middleware handler that serves static files in the given directory.
+func RjServe(urlPrefix string, fs static.ServeFileSystem) gin.HandlerFunc {
+	fileserver := http.FileServer(fs)
+	if urlPrefix != "" {
+		fileserver = http.StripPrefix(urlPrefix, fileserver)
+	}
+	return func(c *gin.Context) {
+		fmt.Println("WOWOW")
+		if fs.Exists(urlPrefix, c.Request.URL.Path) {
+
+			if strings.HasSuffix(c.Request.URL.Path, "rjResume.pdf") {
+				addr := getIPAdress(c.Request)
+
+				mux.Lock()
+				seen := resumeRequesters[addr]
+				resumeRequesters[addr]++
+				mux.Unlock()
+
+				myEmail := mEmail
+				lmg := mg
+				if seen == 0 {
+					_, _, err := lmg.Send(mailgun.NewMessage("robot@mail.therileyjohnson.com", fmt.Sprintf("Someone at %s Downloaded Your Resume", addr), "See the title dummy", myEmail))
+					if err != nil {
+						fmt.Println("Error sending email to yourself")
+					}
+				}
+			}
+
+			fileserver.ServeHTTP(c.Writer, c.Request)
+			c.Abort()
+		}
+	}
+}
 
 //Function for determining which snapcode will show on the template
 func getSnap() string {
@@ -109,6 +174,7 @@ func sms(c *gin.Context) {
 }
 
 func serveFile(c *gin.Context) {
+	fmt.Println(c.Request.URL)
 	if strings.HasSuffix(c.Request.URL.Path, "rjResume.pdf") {
 		addr := getIPAdress(c.Request)
 		mux.Lock()
@@ -124,7 +190,9 @@ func serveFile(c *gin.Context) {
 			}
 		}
 	}
-	http.ServeFile(c.Writer, c.Request, "./static"+c.Request.URL.Path)
+	file_serve := static.Serve("/public", static.LocalFile("static/", true))
+	file_serve(c)
+	// http.ServeFile(c.Writer, c.Request, "./static"+c.Request.URL.Path)
 }
 
 func index(c *gin.Context) {
@@ -225,8 +293,8 @@ func init() {
 
 	var information info
 
-	if fi, err = ioutil.ReadFile("../keys.json"); err != nil {
-		log.Fatal("Error reading keys data")
+	if fi, err = ioutil.ReadFile("keys.json"); err != nil {
+		log.Fatal("Error reading keys data; ", err)
 	} else {
 		json.Unmarshal(fi, &information)
 	}
@@ -246,7 +314,6 @@ func main() {
 	mc := melody.New()
 	r.GET("/", index)
 	r.GET("/chat", chat)
-	r.GET("/public/", serveFile)
 	r.GET("/sms", sms)
 	r.GET("/wschat", func(c *gin.Context) {
 		mc.HandleRequest(c.Writer, c.Request)
@@ -254,5 +321,6 @@ func main() {
 	mc.HandleMessage(func(s *melody.Session, msg []byte) {
 		mc.Broadcast(msg)
 	})
+	r.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
 	log.Fatal(r.Run(port))
 }
