@@ -293,7 +293,7 @@ func init() {
 
 	var information info
 
-	if fi, err = ioutil.ReadFile("keys.json"); err != nil {
+	if fi, err = ioutil.ReadFile("../keys.json"); err != nil {
 		log.Fatal("Error reading keys data; ", err)
 	} else {
 		json.Unmarshal(fi, &information)
