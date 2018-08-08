@@ -6,3 +6,8 @@ nohup.out
 *.jpg
 *.json
 *.png
+
+/projects/*
+
+!RJglobal.json
+!projects/.gitkeep
