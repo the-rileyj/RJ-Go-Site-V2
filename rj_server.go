@@ -31,7 +31,6 @@ type rjFileSystem struct {
 func (l *rjFileSystem) Exists(prefix string, filepath string) bool {
 	if p := strings.TrimPrefix(filepath, prefix); len(p) < len(filepath) {
 		name := path.Join(l.root, p)
-		fmt.Println(name)
 		_, err := os.Stat(name)
 		if err != nil {
 			return false
@@ -50,14 +49,13 @@ func NewRjFileSystem(root string) *rjFileSystem {
 	}
 }
 
-// Static returns a middleware handler that serves static files in the given directory.
+// RjServe returns a middleware handler that serves static files in the given directory.
 func RjServe(urlPrefix string, fs static.ServeFileSystem) gin.HandlerFunc {
 	fileserver := http.FileServer(fs)
 	if urlPrefix != "" {
 		fileserver = http.StripPrefix(urlPrefix, fileserver)
 	}
 	return func(c *gin.Context) {
-		fmt.Println("WOWOW")
 		if fs.Exists(urlPrefix, c.Request.URL.Path) {
 
 			if strings.HasSuffix(c.Request.URL.Path, "rjResume.pdf") {
@@ -173,27 +171,26 @@ func sms(c *gin.Context) {
 	fmt.Println(2, c.Request.URL.Query()["accountsid"])
 }
 
-func serveFile(c *gin.Context) {
-	fmt.Println(c.Request.URL)
-	if strings.HasSuffix(c.Request.URL.Path, "rjResume.pdf") {
-		addr := getIPAdress(c.Request)
-		mux.Lock()
-		seen := resumeRequesters[addr]
-		resumeRequesters[addr]++
-		myEmail := mEmail
-		lmg := mg
-		mux.Unlock()
-		if seen == 0 {
-			_, _, err := lmg.Send(mailgun.NewMessage("robot@mail.therileyjohnson.com", fmt.Sprintf("Someone at %s Downloaded Your Resume", addr), "See the title dummy", myEmail))
-			if err != nil {
-				fmt.Println("Error sending email to yourself")
-			}
-		}
-	}
-	file_serve := static.Serve("/public", static.LocalFile("static/", true))
-	file_serve(c)
-	// http.ServeFile(c.Writer, c.Request, "./static"+c.Request.URL.Path)
-}
+// func serveFile(c *gin.Context) {
+// 	if strings.HasSuffix(c.Request.URL.Path, "rjResume.pdf") {
+// 		addr := getIPAdress(c.Request)
+// 		mux.Lock()
+// 		seen := resumeRequesters[addr]
+// 		resumeRequesters[addr]++
+// 		myEmail := mEmail
+// 		lmg := mg
+// 		mux.Unlock()
+// 		if seen == 0 {
+// 			_, _, err := lmg.Send(mailgun.NewMessage("robot@mail.therileyjohnson.com", fmt.Sprintf("Someone at %s Downloaded Your Resume", addr), "See the title dummy", myEmail))
+// 			if err != nil {
+// 				fmt.Println("Error sending email to yourself")
+// 			}
+// 		}
+// 	}
+// 	file_serve := static.Serve("/public", static.LocalFile("static/", true))
+// 	file_serve(c)
+// 	// http.ServeFile(c.Writer, c.Request, "./static"+c.Request.URL.Path)
+// }
 
 func index(c *gin.Context) {
 	if c.Request.URL.Query()["check"] == nil {
@@ -313,6 +310,16 @@ func main() {
 	r := gin.Default()
 	mc := melody.New()
 	r.GET("/", index)
+	// Postponed until after https update
+	// r.POST("/update/site", func(context *gin.Context) {
+	// 	context.Writer.Write([]byte("updating..."))
+	// 	os.Exit(9)
+	// })
+	// Postponed until after https update
+	// r.POST("/update/rob", func(context *gin.Context) {
+	// 	context.Writer.Write([]byte("updating..."))
+	// 	os.Exit(9)
+	// })
 	r.GET("/chat", chat)
 	r.GET("/sms", sms)
 	r.GET("/wschat", func(c *gin.Context) {
@@ -322,5 +329,7 @@ func main() {
 		mc.Broadcast(msg)
 	})
 	r.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
+
+	fmt.Println("Running server on", port)
 	log.Fatal(r.Run(port))
 }

@@ -8,6 +8,8 @@ nohup.out
 *.png
 
 /projects/*
+/static/public/files/*
 
 !RJglobal.json
 !projects/.gitkeep
+!static/public/files/.gitkeep
