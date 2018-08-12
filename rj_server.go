@@ -240,6 +240,8 @@ type info struct {
 	Production bool   `json:"production"`
 	ProPort    string `json:"pro-port"`
 	DevPort    string `json:"dev-port"`
+	CertPath   string `json:"certPath"`
+	SecretPath string `json:"secretPath"`
 }
 
 var privateRanges = []ipRange{
@@ -273,7 +275,7 @@ var tpl *template.Template
 var vT visiTracker
 var mux sync.Mutex
 var mg mailgun.Mailgun
-var mEmail, port string
+var certPath, mEmail, port, secretPath string
 var resumeRequesters map[string]int
 
 func init() {
@@ -299,6 +301,9 @@ func init() {
 	mg = mailgun.NewMailgun(information.MailServer, information.Private, information.Public)
 	mEmail = information.MyEmail
 
+	certPath = information.CertPath
+	secretPath = information.SecretPath
+
 	if information.Production {
 		port = information.ProPort
 	} else {
@@ -307,9 +312,10 @@ func init() {
 }
 
 func main() {
-	r := gin.Default()
+	httpsRouter := gin.Default()
+	httpRouter := gin.Default()
 	mc := melody.New()
-	r.GET("/", index)
+	httpsRouter.GET("/", index)
 	// Postponed until after https update
 	// r.POST("/update/site", func(context *gin.Context) {
 	// 	context.Writer.Write([]byte("updating..."))
@@ -320,16 +326,25 @@ func main() {
 	// 	context.Writer.Write([]byte("updating..."))
 	// 	os.Exit(9)
 	// })
-	r.GET("/chat", chat)
-	r.GET("/sms", sms)
-	r.GET("/wschat", func(c *gin.Context) {
+	httpRouter.GET("/*path", func(c *gin.Context) {
+		c.Redirect(302, "https://therileyjohnson.com/"+c.Param("variable"))
+	})
+	httpsRouter.GET("/chat", chat)
+	httpsRouter.GET("/sms", sms)
+	httpsRouter.GET("/wschat", func(c *gin.Context) {
 		mc.HandleRequest(c.Writer, c.Request)
 	})
 	mc.HandleMessage(func(s *melody.Session, msg []byte) {
 		mc.Broadcast(msg)
 	})
-	r.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
+	httpsRouter.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
 
-	fmt.Println("Running server on", port)
-	log.Fatal(r.Run(port))
+	if certPath != "" && secretPath != "" {
+		go httpsRouter.RunTLS(":443", certPath, secretPath)
+		fmt.Println("Running http redirect server on", port)
+		log.Fatal(httpRouter.Run(port))
+	} else {
+		fmt.Println("Running only the http server on", port)
+		log.Fatal(httpsRouter.Run(port))
+	}
 }
