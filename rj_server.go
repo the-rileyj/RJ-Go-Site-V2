@@ -116,6 +116,19 @@ func RjGeneralFileServer(urlPrefix string, fs static.ServeFileSystem) gin.Handle
 	}
 }
 
+func getInfo() (info, error) {
+	var information info
+	fi, err := os.Open("../keys.json")
+
+	if err != nil {
+		return info{}, err
+	}
+
+	err = json.NewDecoder(fi).Decode(&information)
+
+	return information, err
+}
+
 //Function for determining which snapcode will show on the template
 func getSnap() string {
 	if rand.Intn(2) == 1 {
@@ -209,6 +222,16 @@ func writeStructToJSON(strct interface{}, path string) {
 		return
 	}
 	err = ioutil.WriteFile(path, res, 0644)
+}
+
+func writeInfo(information info) error {
+	informationBytes, err := json.Marshal(information)
+
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile("../keys.json", informationBytes, 0644)
 }
 
 func (vT *visiTracker) InSlice(a string) bool {
@@ -374,7 +397,7 @@ func init() {
 }
 
 func main() {
-	rjGlobal, err := getRjGlobal("./RJglobal.json")
+	rjGlobal, err := getRjGlobal("./")
 
 	if err != nil {
 		log.Fatal(err)
@@ -393,7 +416,7 @@ func main() {
 	// 	context.Writer.Write([]byte("updating..."))
 	// 	os.Exit(9)
 	// })
-	httpsRouter.GET("/", kdsuIP)
+	httpsRouter.GET("/kdsu_addr", kdsuIP)
 
 	httpsRouter.POST("/kdsu_addr", func(c *gin.Context) {
 		var IPupdater ipUpdate
@@ -415,6 +438,12 @@ func main() {
 		information, err := getInfo()
 
 		if err != nil {
+			c.Writer.Write([]byte("FAILURE"))
+			return
+		}
+
+		if postIP := getIPAdress(c.Request); !strings.Contains(postIP, "138.247.") {
+			fmt.Println(postIP)
 			c.Writer.Write([]byte("FAILURE"))
 			return
 		}
