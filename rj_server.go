@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -26,6 +27,21 @@ type rjFileSystem struct {
 	http.FileSystem
 	root    string
 	indexes bool
+}
+
+// RJGlobal is for storing global information about projects and the project root URL, committed
+type RJGlobal struct {
+	Projects []RJProject `json:"projects"`
+	URL      string      `json:"url"`
+}
+
+// RJProject is for storing global information about a given project, committed
+type RJProject struct {
+	Description string `json:"description"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	SitePath    string `json:"sitePath"`
+	URL         string `json:"url"`
 }
 
 func (l *rjFileSystem) Exists(prefix string, filepath string) bool {
@@ -52,9 +68,11 @@ func NewRjFileSystem(root string) *rjFileSystem {
 // RjServe returns a middleware handler that serves static files in the given directory.
 func RjServe(urlPrefix string, fs static.ServeFileSystem) gin.HandlerFunc {
 	fileserver := http.FileServer(fs)
+
 	if urlPrefix != "" {
 		fileserver = http.StripPrefix(urlPrefix, fileserver)
 	}
+
 	return func(c *gin.Context) {
 		if fs.Exists(urlPrefix, c.Request.URL.Path) {
 
@@ -76,6 +94,22 @@ func RjServe(urlPrefix string, fs static.ServeFileSystem) gin.HandlerFunc {
 				}
 			}
 
+			fileserver.ServeHTTP(c.Writer, c.Request)
+			c.Abort()
+		}
+	}
+}
+
+// RjServe returns a middleware handler that serves static files in the given directory.
+func RjGeneralFileServer(urlPrefix string, fs static.ServeFileSystem) gin.HandlerFunc {
+	fileserver := http.FileServer(fs)
+
+	if urlPrefix != "" {
+		fileserver = http.StripPrefix(urlPrefix, fileserver)
+	}
+
+	return func(c *gin.Context) {
+		if fs.Exists(urlPrefix, c.Request.URL.Path) {
 			fileserver.ServeHTTP(c.Writer, c.Request)
 			c.Abort()
 		}
@@ -138,6 +172,28 @@ func getIPAdress(r *http.Request) string {
 		}
 	}
 	return ""
+}
+
+func getRjGlobal(projectRootPath string) (RJGlobal, error) {
+	var rjGlobal RJGlobal
+
+	if _, err := os.Stat(path.Join(projectRootPath, "RJglobal.json")); err != nil {
+		return RJGlobal{}, errors.New("could not find RJglobal file")
+	}
+
+	rjGlobalFile, err := os.Open(path.Join(projectRootPath, "RJglobal.json"))
+
+	defer rjGlobalFile.Close()
+
+	if err != nil {
+		return RJGlobal{}, err
+	}
+
+	if err := json.NewDecoder(rjGlobalFile).Decode(&rjGlobal); err != nil {
+		return RJGlobal{}, err
+	}
+
+	return rjGlobal, nil
 }
 
 func executeTemplate(w http.ResponseWriter, t string, d interface{}) {
@@ -281,8 +337,8 @@ var resumeRequesters map[string]int
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	resumeRequesters = make(map[string]int)
-	fi, err := ioutil.ReadFile("../numer.json")
-	if err == nil {
+
+	if fi, err := ioutil.ReadFile("../numer.json"); err == nil {
 		json.Unmarshal(fi, &vT)
 	} else {
 		vT = visiTracker{0, 0, []string{}}
@@ -292,7 +348,7 @@ func init() {
 
 	var information info
 
-	if fi, err = ioutil.ReadFile("../keys.json"); err != nil {
+	if fi, err := ioutil.ReadFile("../keys.json"); err != nil {
 		log.Fatal("Error reading keys data; ", err)
 	} else {
 		json.Unmarshal(fi, &information)
@@ -312,10 +368,15 @@ func init() {
 }
 
 func main() {
+	rjGlobal, err := getRjGlobal("./RJglobal.json")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	httpsRouter := gin.Default()
 	httpRouter := gin.Default()
 	mc := melody.New()
-	httpsRouter.GET("/", index)
 	// Postponed until after https update
 	// r.POST("/update/site", func(context *gin.Context) {
 	// 	context.Writer.Write([]byte("updating..."))
@@ -326,9 +387,14 @@ func main() {
 	// 	context.Writer.Write([]byte("updating..."))
 	// 	os.Exit(9)
 	// })
+
+	// HTTP Routes:
 	httpRouter.GET("/*path", func(c *gin.Context) {
 		c.Redirect(302, "https://therileyjohnson.com/"+c.Param("variable"))
 	})
+
+	// HTTPS Routes:
+	httpsRouter.GET("/", index)
 	httpsRouter.GET("/chat", chat)
 	httpsRouter.GET("/sms", sms)
 	httpsRouter.GET("/wschat", func(c *gin.Context) {
@@ -337,6 +403,15 @@ func main() {
 	mc.HandleMessage(func(s *melody.Session, msg []byte) {
 		mc.Broadcast(msg)
 	})
+
+	for _, rjProject := range rjGlobal.Projects {
+		if rjProject.SitePath != "" {
+			httpsRouter.GET(rjProject.SitePath, func(c *gin.Context) {
+				// ADJUST
+			})
+		}
+	}
+
 	httpsRouter.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
 
 	if certPath != "" && secretPath != "" {
