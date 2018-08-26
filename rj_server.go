@@ -263,6 +263,17 @@ func index(c *gin.Context) {
 	executeTemplate(c.Writer, "index.gohtml", vT)
 }
 
+func kdsuIP(c *gin.Context) {
+	information, err := getInfo()
+
+	if err != nil {
+		c.Writer.Write([]byte(fmt.Sprintf("ERROR: %s", err.Error())))
+		return
+	}
+
+	executeTemplate(c.Writer, "kdsuIP.gohtml", information.KdsuIP)
+}
+
 //ipRange - a structure that holds the start and end of a range of ip addresses
 type ipRange struct {
 	start net.IP
@@ -275,15 +286,15 @@ type visiTracker struct {
 	IPList []string `json:"ips"`
 }
 
-type message struct {
-	Pi      bool   `json:"pi"`
-	Message string `json:"message"`
+type ipUpdate struct {
+	Error, IP string
 }
 
 //Struct to hold the private and public keys for the MailGun API
 type info struct {
 	Private    string `json:"private"`
 	Public     string `json:"public"`
+	KdsuIP     string `json:"kdsuIP"`
 	MailServer string `json:"mailServer"`
 	MyEmail    string `json:"myEmail"`
 	Spyl       string `json:"spyLogin"`
@@ -337,8 +348,9 @@ var resumeRequesters map[string]int
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	resumeRequesters = make(map[string]int)
+	fi, err := ioutil.ReadFile("../numer.json")
 
-	if fi, err := ioutil.ReadFile("../numer.json"); err == nil {
+	if err == nil {
 		json.Unmarshal(fi, &vT)
 	} else {
 		vT = visiTracker{0, 0, []string{}}
@@ -346,13 +358,7 @@ func init() {
 
 	tpl = template.Must(template.New("").Funcs(template.FuncMap{"snapCode": getSnap}).ParseGlob("templates/*.gohtml"))
 
-	var information info
-
-	if fi, err := ioutil.ReadFile("../keys.json"); err != nil {
-		log.Fatal("Error reading keys data; ", err)
-	} else {
-		json.Unmarshal(fi, &information)
-	}
+	information, err := getInfo()
 
 	mg = mailgun.NewMailgun(information.MailServer, information.Private, information.Public)
 	mEmail = information.MyEmail
@@ -387,8 +393,44 @@ func main() {
 	// 	context.Writer.Write([]byte("updating..."))
 	// 	os.Exit(9)
 	// })
+	httpsRouter.GET("/", kdsuIP)
 
-	// HTTP Routes:
+	httpsRouter.POST("/kdsu_addr", func(c *gin.Context) {
+		var IPupdater ipUpdate
+
+		decoder := json.NewDecoder(c.Request.Body)
+
+		err := decoder.Decode(&IPupdater)
+
+		if err != nil {
+			c.Writer.Write([]byte("FAILURE"))
+			return
+		}
+
+		if IPupdater.Error != "" {
+			c.Writer.Write([]byte("FAILURE"))
+			return
+		}
+
+		information, err := getInfo()
+
+		if err != nil {
+			c.Writer.Write([]byte("FAILURE"))
+			return
+		}
+
+		information.KdsuIP = IPupdater.IP
+
+		err = writeInfo(information)
+
+		if err != nil {
+			c.Writer.Write([]byte("FAILURE"))
+			return
+		}
+
+		c.Writer.Write([]byte("SUCCESS"))
+	})
+
 	httpRouter.GET("/*path", func(c *gin.Context) {
 		c.Redirect(302, "https://therileyjohnson.com/"+c.Param("variable"))
 	})
