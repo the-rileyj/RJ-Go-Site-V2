@@ -294,7 +294,11 @@ func kdsuIP(c *gin.Context) {
 		return
 	}
 
-	executeTemplate(c.Writer, "kdsuIP.gohtml", information.KdsuIP)
+	if information.KdsuIP != "" {
+		executeTemplate(c.Writer, "kdsuIP.gohtml", information.KdsuIP)
+	} else {
+		executeTemplate(c.Writer, "kdsuIP.gohtml", "Could not get IP")
+	}
 }
 
 //ipRange - a structure that holds the start and end of a range of ip addresses
