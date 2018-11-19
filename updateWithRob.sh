@@ -1,4 +1,4 @@
-cd ~/RJNewSite
+cd /home/hippea9/RJNewSite
 
 git pull
 
