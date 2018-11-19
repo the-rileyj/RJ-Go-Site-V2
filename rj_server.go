@@ -324,7 +324,7 @@ func chat(c *gin.Context) { executeTemplate(c.Writer, "chat.gohtml", vT) }
 // }
 
 func phoneSMS(c *gin.Context) {
-	c.Request.Header.Set("Content-Type", "text/html")
+	c.Writer.Header().Set("Content-Type", "text/html")
 
 	c.Writer.Write([]byte("<Response></Response>"))
 
@@ -333,7 +333,11 @@ func phoneSMS(c *gin.Context) {
 
 	rjWebPhone.addToPhoneConversation(c.PostForm("From"), c.PostForm("Body"), true)
 
-	rjWebPhone.writePhoneData("../phoneData.json")
+	err := rjWebPhone.writePhoneData("../phoneData.json")
+
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 // func serveFile(c *gin.Context) {
