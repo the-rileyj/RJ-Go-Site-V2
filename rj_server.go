@@ -71,10 +71,6 @@ func getPhoneData(pathToData string) (*rjPhoneManager, error) {
 }
 
 func (rjPhone *rjPhoneManager) writePhoneData(pathToData string) error {
-	if _, err := os.Stat(pathToData); err != nil {
-		return err
-	}
-
 	phoneData, err := os.OpenFile(pathToData, os.O_WRONLY, 0644)
 
 	defer phoneData.Close()
