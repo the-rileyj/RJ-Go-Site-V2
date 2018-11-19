@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"path"
 	"strings"
@@ -245,9 +246,28 @@ func (vT *visiTracker) InSlice(a string) bool {
 
 func chat(c *gin.Context) { executeTemplate(c.Writer, "chat.gohtml", vT) }
 
-func sms(c *gin.Context) {
-	fmt.Println(1, c.Request.URL.Query()["AccountSid"])
-	fmt.Println(2, c.Request.URL.Query()["accountsid"])
+func phoneCall(c *gin.Context) {
+	bytes, err := httputil.DumpRequest(c.Request, true)
+
+	if err != nil {
+		bytes = []byte("FART")
+	}
+
+	ioutil.WriteFile("../httpCall.txt", bytes, 0644)
+
+	c.Writer.Write([]byte("COOL"))
+}
+
+func phoneSMS(c *gin.Context) {
+	bytes, err := httputil.DumpRequest(c.Request, true)
+
+	if err != nil {
+		bytes = []byte("FART")
+	}
+
+	ioutil.WriteFile("../httpText.txt", bytes, 0644)
+
+	c.Writer.Write([]byte("COOL"))
 }
 
 // func serveFile(c *gin.Context) {
@@ -401,11 +421,11 @@ func init() {
 }
 
 func main() {
-	rjGlobal, err := getRjGlobal("./")
+	// rjGlobal, err := getRjGlobal("./")
 
-	if err != nil {
-		log.Fatal(err)
-	}
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
 	httpsRouter := gin.Default()
 	httpRouter := gin.Default()
@@ -420,49 +440,6 @@ func main() {
 	// 	context.Writer.Write([]byte("updating..."))
 	// 	os.Exit(9)
 	// })
-	httpsRouter.GET("/kdsu_addr", kdsuIP)
-
-	httpsRouter.POST("/kdsu_addr", func(c *gin.Context) {
-		var IPupdater ipUpdate
-
-		decoder := json.NewDecoder(c.Request.Body)
-
-		err := decoder.Decode(&IPupdater)
-
-		if err != nil {
-			c.Writer.Write([]byte("FAILURE"))
-			return
-		}
-
-		if IPupdater.Error != "" {
-			c.Writer.Write([]byte("FAILURE"))
-			return
-		}
-
-		information, err := getInfo()
-
-		if err != nil {
-			c.Writer.Write([]byte("FAILURE"))
-			return
-		}
-
-		if postIP := getIPAdress(c.Request); !strings.Contains(postIP, "138.247.") {
-			fmt.Println(postIP)
-			c.Writer.Write([]byte("FAILURE"))
-			return
-		}
-
-		information.KdsuIP = IPupdater.IP
-
-		err = writeInfo(information)
-
-		if err != nil {
-			c.Writer.Write([]byte("FAILURE"))
-			return
-		}
-
-		c.Writer.Write([]byte("SUCCESS"))
-	})
 
 	httpRouter.GET("/*path", func(c *gin.Context) {
 		c.Redirect(302, "https://therileyjohnson.com/"+c.Param("variable"))
@@ -470,22 +447,28 @@ func main() {
 
 	// HTTPS Routes:
 	httpsRouter.GET("/", index)
+
 	httpsRouter.GET("/chat", chat)
-	httpsRouter.GET("/sms", sms)
-	httpsRouter.GET("/wschat", func(c *gin.Context) {
+
+	httpsRouter.POST("/phone/call", phoneCall)
+
+	httpsRouter.POST("/phone/sms", phoneSMS)
+
+	httpsRouter.GET("/ws/chat", func(c *gin.Context) {
 		mc.HandleRequest(c.Writer, c.Request)
 	})
+
 	mc.HandleMessage(func(s *melody.Session, msg []byte) {
 		mc.Broadcast(msg)
 	})
 
-	for _, rjProject := range rjGlobal.Projects {
+	/*for _, rjProject := range rjGlobal.Projects {
 		if rjProject.SitePath != "" {
 			httpsRouter.GET(rjProject.SitePath, func(c *gin.Context) {
 				// ADJUST
 			})
 		}
-	}
+	}*/
 
 	httpsRouter.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
 

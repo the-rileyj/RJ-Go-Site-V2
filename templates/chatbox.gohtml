@@ -120,7 +120,7 @@
             id = getCookie("id");
         }
         function getWS() {
-            var socket = new WebSocket("ws://" + window.location.host + "/wschat");
+            var socket = new WebSocket("wss://" + window.location.host + "/ws/chat");
             socket.onmessage = function (msg) {
                 obj = JSON.parse(msg.data);
                 if (!channel.val().localeCompare(obj.chan)){
@@ -286,7 +286,7 @@
             id = getCookie("id");
         }
         function getWS() {
-            var socket = new WebSocket("ws://" + window.location.host + "/wschat");
+            var socket = new WebSocket("wss://" + window.location.host + "/ws/chat");
             socket.onmessage = function (msg) {
                 obj = JSON.parse(msg.data);
                 if (!channel.val().localeCompare(obj.chan)){
