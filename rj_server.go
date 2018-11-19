@@ -45,6 +45,72 @@ type RJProject struct {
 	URL         string `json:"url"`
 }
 
+type rjPhoneManager struct {
+	Conversations map[string][]Message `json:"conversations"`
+}
+
+func getPhoneData(pathToData string) (*rjPhoneManager, error) {
+	if _, err := os.Stat(pathToData); err != nil {
+		return nil, err
+	}
+
+	phoneData, err := os.Open(pathToData)
+
+	defer phoneData.Close()
+
+	if err != nil {
+		return nil, err
+	}
+
+	var rjPhone rjPhoneManager
+
+	if err := json.NewDecoder(phoneData).Decode(&rjPhone); err != nil {
+		return nil, err
+	}
+
+	return &rjPhone, nil
+}
+
+func (rjPhone *rjPhoneManager) writePhoneData(pathToData string) error {
+	if _, err := os.Stat(pathToData); err != nil {
+		return err
+	}
+
+	phoneData, err := os.OpenFile(pathToData, os.O_WRONLY, 0644)
+
+	defer phoneData.Close()
+
+	if err != nil {
+		return err
+	}
+
+	if err := json.NewEncoder(phoneData).Encode(rjPhone); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (rjPhone *rjPhoneManager) addToPhoneConversation(phoneNumber string, message string, isRecieved bool) {
+	_, exists := rjPhone.Conversations[phoneNumber]
+
+	if !exists {
+		rjPhone.Conversations[phoneNumber] = make([]Message, 0)
+	}
+
+	conversation := rjPhone.Conversations[phoneNumber]
+
+	conversation = append(conversation, Message{IsRecieved: isRecieved, Message: message, TimeRecieved: time.Now()})
+
+	rjPhone.Conversations[phoneNumber] = conversation
+}
+
+type Message struct {
+	IsRecieved   bool      `json:"isRecieved"`
+	Message      string    `json:"message"`
+	TimeRecieved time.Time `json:"timeRecieved"`
+}
+
 func (l *rjFileSystem) Exists(prefix string, filepath string) bool {
 	if p := strings.TrimPrefix(filepath, prefix); len(p) < len(filepath) {
 		name := path.Join(l.root, p)
@@ -246,28 +312,29 @@ func (vT *visiTracker) InSlice(a string) bool {
 
 func chat(c *gin.Context) { executeTemplate(c.Writer, "chat.gohtml", vT) }
 
-func phoneCall(c *gin.Context) {
-	bytes, err := httputil.DumpRequest(c.Request, true)
+// func phoneCall(c *gin.Context) {
+// 	bytes, err := httputil.DumpRequest(c.Request, true)
 
-	if err != nil {
-		bytes = []byte("FART")
-	}
+// 	if err != nil {
+// 		bytes = []byte("FART")
+// 	}
 
-	ioutil.WriteFile("../httpCall.txt", bytes, 0644)
+// 	ioutil.WriteFile("../httpCall.txt", bytes, 0644)
 
-	c.Writer.Write([]byte("COOL"))
-}
+// 	c.Writer.Write([]byte("COOL"))
+// }
 
 func phoneSMS(c *gin.Context) {
-	bytes, err := httputil.DumpRequest(c.Request, true)
+	c.Request.Header.Set("Content-Type", "text/html")
 
-	if err != nil {
-		bytes = []byte("FART")
-	}
+	c.Writer.Write([]byte("<Response></Response>"))
 
-	ioutil.WriteFile("../httpText.txt", bytes, 0644)
+	phoneMux.Lock()
+	defer phoneMux.Unlock()
 
-	c.Writer.Write([]byte("COOL"))
+	rjWebPhone.addToPhoneConversation(c.PostForm("From"), c.PostForm("Body"), true)
+
+	rjWebPhone.writePhoneData("../phoneData.json")
 }
 
 // func serveFile(c *gin.Context) {
@@ -304,21 +371,6 @@ func index(c *gin.Context) {
 	}
 
 	executeTemplate(c.Writer, "index.gohtml", vT)
-}
-
-func kdsuIP(c *gin.Context) {
-	information, err := getInfo()
-
-	if err != nil {
-		c.Writer.Write([]byte(fmt.Sprintf("ERROR: %s", err.Error())))
-		return
-	}
-
-	if information.KdsuIP != "" {
-		executeTemplate(c.Writer, "kdsuIP.gohtml", information.KdsuIP)
-	} else {
-		executeTemplate(c.Writer, "kdsuIP.gohtml", "Could not get IP")
-	}
 }
 
 //ipRange - a structure that holds the start and end of a range of ip addresses
@@ -387,14 +439,19 @@ var privateRanges = []ipRange{
 
 var tpl *template.Template
 var vT visiTracker
+var information info
 var mux sync.Mutex
+var phoneMux sync.Mutex
 var mg mailgun.Mailgun
 var certPath, mEmail, port, secretPath string
 var resumeRequesters map[string]int
+var rjWebPhone *rjPhoneManager
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
+
 	resumeRequesters = make(map[string]int)
+
 	fi, err := ioutil.ReadFile("../numer.json")
 
 	if err == nil {
@@ -405,7 +462,7 @@ func init() {
 
 	tpl = template.Must(template.New("").Funcs(template.FuncMap{"snapCode": getSnap}).ParseGlob("templates/*.gohtml"))
 
-	information, err := getInfo()
+	information, err = getInfo()
 
 	mg = mailgun.NewMailgun(information.MailServer, information.Private, information.Public)
 	mEmail = information.MyEmail
@@ -417,6 +474,12 @@ func init() {
 		port = information.ProPort
 	} else {
 		port = information.DevPort
+	}
+
+	rjWebPhone, err = getPhoneData("../phoneData.json")
+
+	if err != nil {
+		rjWebPhone = &rjPhoneManager{Conversations: make(map[string][]Message)}
 	}
 }
 
@@ -450,7 +513,7 @@ func main() {
 
 	httpsRouter.GET("/chat", chat)
 
-	httpsRouter.POST("/phone/call", phoneCall)
+	// httpsRouter.POST("/phone/call", phoneCall)
 
 	httpsRouter.POST("/phone/sms", phoneSMS)
 
