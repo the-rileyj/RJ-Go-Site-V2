@@ -71,7 +71,7 @@ func getPhoneData(pathToData string) (*rjPhoneManager, error) {
 }
 
 func (rjPhone *rjPhoneManager) writePhoneData(pathToData string) error {
-	phoneData, err := os.OpenFile(pathToData, os.O_WRONLY, 0644)
+	phoneData, err := os.OpenFile(pathToData, os.O_CREATE, 0644)
 
 	defer phoneData.Close()
 
@@ -327,7 +327,10 @@ func phoneSMS(c *gin.Context) {
 	phoneMux.Lock()
 	defer phoneMux.Unlock()
 
-	rjWebPhone.addToPhoneConversation(c.PostForm("From"), c.PostForm("Body"), true)
+	from := c.PostForm("From")
+	body := c.PostForm("Body")
+
+	rjWebPhone.addToPhoneConversation(from, body, true)
 
 	err := rjWebPhone.writePhoneData("../phoneData.json")
 
@@ -503,26 +506,42 @@ func main() {
 	// 	os.Exit(9)
 	// })
 
-	httpRouter.GET("/*path", func(c *gin.Context) {
-		c.Redirect(302, "https://therileyjohnson.com/"+c.Param("variable"))
-	})
-
-	// HTTPS Routes:
-	httpsRouter.GET("/", index)
-
-	httpsRouter.GET("/chat", chat)
-
-	// httpsRouter.POST("/phone/call", phoneCall)
-
-	httpsRouter.POST("/phone/sms", phoneSMS)
-
-	httpsRouter.GET("/ws/chat", func(c *gin.Context) {
+	chatWSConnectionHandler := func(c *gin.Context) {
 		mc.HandleRequest(c.Writer, c.Request)
-	})
+	}
 
 	mc.HandleMessage(func(s *melody.Session, msg []byte) {
 		mc.Broadcast(msg)
 	})
+
+	routes := map[string]map[string]func(*gin.Context){
+		"GET": {
+			"/":        index,
+			"/chat":    chat,
+			"/ws/chat": chatWSConnectionHandler,
+		},
+		"POST": {
+			"/phone/sms": phoneSMS,
+		},
+	}
+
+	var mainRouter *gin.Engine
+
+	if certPath != "" && secretPath != "" {
+		mainRouter = httpsRouter
+	} else {
+		mainRouter = httpRouter
+	}
+
+	// Register GET routes with HTTPS router
+	for route, function := range routes["GET"] {
+		mainRouter.GET(route, function)
+	}
+
+	// Register POST routes with HTTPS router
+	for route, function := range routes["POST"] {
+		mainRouter.POST(route, function)
+	}
 
 	/*for _, rjProject := range rjGlobal.Projects {
 		if rjProject.SitePath != "" {
@@ -532,14 +551,24 @@ func main() {
 		}
 	}*/
 
-	httpsRouter.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
-
 	if certPath != "" && secretPath != "" {
+		// Register redirect route in HTTP router
+		httpRouter.GET("/*path", func(c *gin.Context) {
+			c.Redirect(302, "https://therileyjohnson.com/"+c.Param("variable"))
+		})
+
+		httpsRouter.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
+
 		go httpsRouter.RunTLS(":443", certPath, secretPath)
+
 		fmt.Println("Running http redirect server on", port)
+
 		log.Fatal(httpRouter.Run(port))
 	} else {
+		httpRouter.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
+
 		fmt.Println("Running only the http server on", port)
-		log.Fatal(httpsRouter.Run(port))
+
+		log.Fatal(httpRouter.Run(port))
 	}
 }
