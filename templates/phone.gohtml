@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>RJ's Site</title>
+    {{template "defaulthead"}}
+    <link rel="stylesheet" href="/public/stylesheets/phone.css">
+</head>
+
+<body>
+    {{template "header"}}
+    <div id="main">
+        <audio id="sound" src="/public/files/mp3/maskoffnotification2.5.mp3" autostart="false" style="display: none"></audio>
+        <div id="loading">
+            <div id="dualRing"></div>
+        </div>
+        <div id="login" style="display: none">
+            <div id="loginResponse"></div>
+            <input placeholder="Username" id="username" type="text">
+            <input placeholder="Password" id="password" type="password">
+            <button id="loginButton">login</button>
+        </div>
+        <div id="phone" style="display: none">
+            <div id="phoneResponse">Send A Text</div>
+            <input placeholder="Phone Number" id="phoneNumber" type="text">
+            <input placeholder="message" id="phoneMessage" type="text">
+            <button id="sendMessageButton">Send Message</button>
+            <select id="messagesList"></select>
+            <div id="messageHistory"></div>
+        </div>
+    </div>
+    <div id="Home" class="spacer"></div>
+    {{template "footer"}}
+    <script src="/public/javascript/axios.min.js" type="text/javascript"></script>
+    <script src="/public/javascript/phone.js" type="text/javascript"></script>
+</body>
+
+</html>

@@ -1,0 +1,134 @@
+#main {
+    height: 100vh;
+    width: 100%;
+}
+
+#loading {
+    align-items: center;
+    display: flex;
+    height: 100%;
+    justify-content: center;
+}
+
+#dualRing {
+  display: inline-block;
+  width: 7vh;
+  height: 7vh;
+}
+
+#dualRing:after {
+  content: " ";
+  display: block;
+  width: 7vh;
+  height: 7vh;
+  margin: 1px;
+  border-radius: 50%;
+  border: 5px solid #fff;
+  border-color: #fff transparent #fff transparent;
+  animation: dualRing 1.2s linear infinite;
+}
+@keyframes dualRing {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+#login {
+    display: grid;
+    grid-template-rows: 2fr 1fr .25fr 1fr .25fr 1fr .25fr 1fr 2fr;
+    grid-template-columns: .5fr 1fr .5fr;
+    grid-template-areas:
+    ". . ."
+    ". loginResponse ."
+    ". . ."
+    ". username ."
+    ". . ."
+    ". password ."
+    ". . ."
+    ". loginButton ."
+    ". . .";
+    height: 100%;
+    width: 100%;
+}
+
+#loginResponse {
+    color: red;
+    grid-area: loginResponse;
+    text-align: center;
+}
+
+#username {
+    grid-area: username;
+}
+
+#password {
+    grid-area: password;
+}
+
+#loginButton {
+    border-radius: .25rem;
+    grid-area: loginButton;
+}
+
+#phone {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-template-rows: .1fr .1fr 1fr;
+    grid-template-areas:
+    " . . phoneResponse phoneResponse . . "
+    "phoneNumber phoneMessage phoneMessage phoneMessage phoneMessage sendMessageButton"
+    "messagesList messageHistory messageHistory messageHistory messageHistory messageHistory";
+    grid-row-gap: 5%;
+    height: 100%;
+    width: 100%;
+}
+
+#phoneResponse {
+    color: red;
+    grid-area: phoneResponse;
+    text-align: center;
+}
+
+#phoneNumber {
+    grid-area: phoneNumber;
+}
+
+#phoneMessage {
+    grid-area: phoneMessage;
+}
+
+#sendMessageButton {
+    grid-area: sendMessageButton;
+}
+
+#messagesList {
+    grid-area: messagesList;
+    width: 100%;
+    height: 10%;
+}
+
+#messageHistory {
+    grid-area: messageHistory;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: min-content;
+    grid-column-gap: 5%;
+    grid-row-gap: 5%;
+    overflow-y: scroll;
+}
+
+.recieved {
+    background-color: aqua;
+    border-radius: .25rem;
+    height: auto;
+}
+
+.sent {
+    background-color: coral;
+    border-radius: .25rem;
+    height: auto;
+}

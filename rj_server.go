@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -20,6 +21,7 @@ import (
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/olahol/melody"
+	uuid "github.com/satori/go.uuid"
 	mailgun "gopkg.in/mailgun/mailgun-go.v1"
 )
 
@@ -46,6 +48,15 @@ type RJProject struct {
 
 type rjPhoneManager struct {
 	Conversations map[string][]Message `json:"conversations"`
+}
+
+func getUUID() string {
+	var err error
+	var uid uuid.UUID
+	for uid, err = uuid.NewV4(); err != nil; {
+		uid, err = uuid.NewV4()
+	}
+	return uid.String()
 }
 
 func getPhoneData(pathToData string) (*rjPhoneManager, error) {
@@ -86,7 +97,7 @@ func (rjPhone *rjPhoneManager) writePhoneData(pathToData string) error {
 	return nil
 }
 
-func (rjPhone *rjPhoneManager) addToPhoneConversation(phoneNumber string, message string, isRecieved bool) {
+func (rjPhone *rjPhoneManager) addToPhoneConversation(phoneNumber string, msg string, isRecieved bool) Message {
 	_, exists := rjPhone.Conversations[phoneNumber]
 
 	if !exists {
@@ -95,15 +106,53 @@ func (rjPhone *rjPhoneManager) addToPhoneConversation(phoneNumber string, messag
 
 	conversation := rjPhone.Conversations[phoneNumber]
 
-	conversation = append(conversation, Message{IsRecieved: isRecieved, Message: message, TimeRecieved: time.Now()})
+	message := Message{IsRecieved: isRecieved, Message: msg, TimeRecieved: time.Now()}
+
+	conversation = append(conversation, message)
 
 	rjPhone.Conversations[phoneNumber] = conversation
+
+	return message
 }
 
 type Message struct {
 	IsRecieved   bool      `json:"isRecieved"`
 	Message      string    `json:"message"`
 	TimeRecieved time.Time `json:"timeRecieved"`
+}
+
+type WSMessage struct {
+	IsRecieved   bool      `json:"isRecieved"`
+	Message      string    `json:"message"`
+	OtherNumber  string    `json:"otherNumber"`
+	TimeRecieved time.Time `json:"timeRecieved"`
+}
+
+func (m Message) Send(to string) error {
+	msgData := url.Values{}
+
+	msgData.Set("To", to)
+	msgData.Set("From", information.Number)
+	msgData.Set("Body", m.Message)
+
+	msgDataReader := *strings.NewReader(msgData.Encode())
+
+	client := &http.Client{Timeout: 3 * time.Second}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json", information.Sid), &msgDataReader)
+
+	if err != nil {
+		return err
+	}
+
+	req.SetBasicAuth(information.Sid, information.Token)
+
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	_, err = client.Do(req)
+
+	return err
 }
 
 func (l *rjFileSystem) Exists(prefix string, filepath string) bool {
@@ -319,24 +368,193 @@ func chat(c *gin.Context) { executeTemplate(c.Writer, "chat.gohtml", vT) }
 // 	c.Writer.Write([]byte("COOL"))
 // }
 
-func phoneSMS(c *gin.Context) {
-	c.Writer.Header().Set("Content-Type", "text/html")
+func authenticatePhone(c *gin.Context) {
+	var loginInformation struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
 
-	c.Writer.Write([]byte("<Response></Response>"))
+	defer c.Request.Body.Close()
 
-	phoneMux.Lock()
-	defer phoneMux.Unlock()
-
-	from := c.PostForm("From")
-	body := c.PostForm("Body")
-
-	rjWebPhone.addToPhoneConversation(from, body, true)
-
-	err := rjWebPhone.writePhoneData("../phoneData.json")
+	err := json.NewDecoder(c.Request.Body).Decode(&loginInformation)
 
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(400, gin.H{
+			"error": "could not decode payload",
+		})
+		return
 	}
+
+	if loginInformation.Username != information.PhoneUser || loginInformation.Password != information.PhonePass {
+		fmt.Println(loginInformation, information.PhoneUser, information.PhonePass)
+		c.JSON(400, gin.H{
+			"error": "incorrect login information",
+		})
+		return
+	}
+
+	token := getUUID()
+
+	httpSessions[token] = true
+
+	c.SetCookie("token", token, 999, "/phone", "https://therileyjohnson.com", true, false)
+
+	c.JSON(200, gin.H{
+		"token": token,
+	})
+}
+
+func authenticatedPhoneGetRoute(function func(*gin.Context)) func(*gin.Context) {
+	return func(c *gin.Context) {
+		token := c.Param("token")
+
+		fmt.Println(httpSessions[token])
+
+		if httpSessions[token] {
+			function(c)
+		} else {
+			c.JSON(400, gin.H{
+				"error": "an error occured",
+			})
+		}
+
+	}
+}
+
+func authenticatedPhonePostRoute(function func(*gin.Context)) func(*gin.Context) {
+	return func(c *gin.Context) {
+		var token struct {
+			Token string `json:"token"`
+		}
+
+		bodyBytes, err := ioutil.ReadAll(c.Request.Body)
+
+		if err != nil {
+			fmt.Println(err)
+
+			c.JSON(400, gin.H{
+				"error": "an error occured",
+			})
+
+			return
+		}
+
+		err = json.Unmarshal(bodyBytes, &token)
+
+		if err != nil {
+			fmt.Println(err)
+
+			c.JSON(400, gin.H{
+				"error": "an error occured",
+			})
+
+			return
+		}
+
+		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
+		if httpSessions[token.Token] {
+			function(c)
+		} else {
+			c.JSON(400, gin.H{
+				"error": "an error occured",
+			})
+		}
+	}
+}
+
+func phoneSMS(phoneWSController *melody.Melody) func(*gin.Context) {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Content-Type", "text/html")
+
+		c.Writer.Write([]byte("<Response></Response>"))
+
+		phoneMux.Lock()
+		defer phoneMux.Unlock()
+
+		from := c.PostForm("From")
+		body := c.PostForm("Body")
+
+		message := rjWebPhone.addToPhoneConversation(from, body, true)
+
+		err := rjWebPhone.writePhoneData("../phoneData.json")
+
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		messageBytes, err := json.Marshal(&WSMessage{message.IsRecieved, message.Message, from, message.TimeRecieved})
+
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		phoneWSController.Broadcast(messageBytes)
+	}
+}
+
+func getPhoneConversations(c *gin.Context) {
+	json.NewEncoder(c.Writer).Encode(rjWebPhone.Conversations)
+}
+
+func makePhoneSMS(phoneWSController *melody.Melody) func(*gin.Context) {
+	return func(c *gin.Context) {
+		var phoneWSMessage struct {
+			Number  string `json:"number"`
+			Message string `json:"message"`
+		}
+
+		err := json.NewDecoder(c.Request.Body).Decode(&phoneWSMessage)
+
+		if err != nil {
+			c.JSON(400, gin.H{
+				"error": "could not decode payload",
+			})
+			return
+		}
+
+		message := Message{IsRecieved: false, Message: phoneWSMessage.Message, TimeRecieved: time.Now()}
+
+		err = message.Send(phoneWSMessage.Number)
+
+		if err != nil {
+			c.JSON(400, gin.H{
+				"error": "could not send sms",
+			})
+			return
+		}
+
+		messageBytes, err := json.Marshal(&WSMessage{message.IsRecieved, message.Message, phoneWSMessage.Number, message.TimeRecieved})
+
+		if err != nil {
+			c.JSON(400, gin.H{
+				"error": "could not marshall message json",
+			})
+			return
+		}
+
+		rjWebPhone.addToPhoneConversation(phoneWSMessage.Number, phoneWSMessage.Message, false)
+
+		err = rjWebPhone.writePhoneData("../phoneData.json")
+
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		c.JSON(200, gin.H{
+			"error": "",
+		})
+
+		phoneWSController.Broadcast(messageBytes)
+
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+}
+
+func phone(c *gin.Context) {
+	executeTemplate(c.Writer, "phone.gohtml", vT)
 }
 
 // func serveFile(c *gin.Context) {
@@ -407,6 +625,8 @@ type info struct {
 	LyricKey   string `json:"lyric_key"`
 	Production bool   `json:"production"`
 	ProPort    string `json:"pro-port"`
+	PhoneUser  string `json:"phoneUser"`
+	PhonePass  string `json:"phonePass"`
 	DevPort    string `json:"dev-port"`
 	CertPath   string `json:"certPath"`
 	SecretPath string `json:"secretPath"`
@@ -441,6 +661,7 @@ var privateRanges = []ipRange{
 
 var tpl *template.Template
 var vT visiTracker
+var httpSessions map[string]bool
 var information info
 var mux sync.Mutex
 var phoneMux sync.Mutex
@@ -452,6 +673,7 @@ var rjWebPhone *rjPhoneManager
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
+	httpSessions = make(map[string]bool)
 	resumeRequesters = make(map[string]int)
 
 	fi, err := ioutil.ReadFile("../numer.json")
@@ -494,7 +716,10 @@ func main() {
 
 	httpsRouter := gin.Default()
 	httpRouter := gin.Default()
-	mc := melody.New()
+
+	chatWSController := melody.New()
+	phoneWSController := melody.New()
+
 	// Postponed until after https update
 	// r.POST("/update/site", func(context *gin.Context) {
 	// 	context.Writer.Write([]byte("updating..."))
@@ -507,21 +732,48 @@ func main() {
 	// })
 
 	chatWSConnectionHandler := func(c *gin.Context) {
-		mc.HandleRequest(c.Writer, c.Request)
+		chatWSController.HandleRequest(c.Writer, c.Request)
 	}
 
-	mc.HandleMessage(func(s *melody.Session, msg []byte) {
-		mc.Broadcast(msg)
+	chatWSController.HandleMessage(func(s *melody.Session, msg []byte) {
+		chatWSController.Broadcast(msg)
 	})
+
+	phoneWSConnectionHandler := func(c *gin.Context) {
+		phoneWSController.HandleRequest(c.Writer, c.Request)
+
+		fmt.Println(phoneWSController.Broadcast([]byte("test")))
+	}
+
+	// phoneWSController.HandleMessage(func(s *melody.Session, msg []byte) {
+	// 	var phoneWSMessage struct {
+	// 		Number  string `json:"number"`
+	// 		Message string `json:"message"`
+	// 	}
+
+	// 	err := json.Unmarshal(msg, &phoneWSMessage)
+
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 		return
+	// 	}
+
+	// 	phoneWSController.Broadcast(msg)
+	// })
 
 	routes := map[string]map[string]func(*gin.Context){
 		"GET": {
-			"/":        index,
-			"/chat":    chat,
-			"/ws/chat": chatWSConnectionHandler,
+			"/":                index,
+			"/chat":            chat,
+			"/phone":           phone,
+			"/ws/chat":         chatWSConnectionHandler,
+			"/ws/phone/:token": authenticatedPhoneGetRoute(phoneWSConnectionHandler),
 		},
 		"POST": {
-			"/phone/sms": phoneSMS,
+			"/phone/login":             authenticatePhone,
+			"/phone/sms":               phoneSMS(phoneWSController),
+			"/phone/make/sms":          authenticatedPhonePostRoute(makePhoneSMS(phoneWSController)),
+			"/phone/get/conversations": authenticatedPhonePostRoute(getPhoneConversations),
 		},
 	}
 

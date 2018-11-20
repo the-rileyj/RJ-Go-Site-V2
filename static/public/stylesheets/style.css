@@ -71,7 +71,9 @@ li.nav-item{
 }
 
 body{
-    padding: 0 0 0 0;
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
 }
 
 #inner{
