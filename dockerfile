@@ -39,16 +39,15 @@ RUN apk update && `
 # Copy the *.go program compiled in the first stage
 COPY --from=buildenv /go/gogram .
 
-# Copy the files on our machine container
-COPY ./projects .
-COPY ./static .
-COPY ./templates .
-COPY ./*.json .
-COPY ./*.crt .
-COPY ./*.key .
+RUN mkdir projects && mkdir static && mkdir templates
 
-# Remove extra unnessesary *.go files
-RUN rm -r *.go
+# Copy the files on our machine container
+COPY ./projects ./projects/
+COPY ./static ./static/
+COPY ./templates ./templates/
+COPY ./*.json ./
+COPY ./*.crt ./
+COPY ./*.key ./
 
 # Expose ports 80 and 443 to host machine
 EXPOSE 80
