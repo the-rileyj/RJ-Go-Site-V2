@@ -229,7 +229,7 @@ func RjGeneralFileServer(urlPrefix string, fs static.ServeFileSystem) gin.Handle
 
 func getInfo() (info, error) {
 	var information info
-	fi, err := os.Open("../keys.json")
+	fi, err := os.Open("keys.json")
 
 	if err != nil {
 		return info{}, err
@@ -342,7 +342,7 @@ func writeInfo(information info) error {
 		return err
 	}
 
-	return ioutil.WriteFile("../keys.json", informationBytes, 0644)
+	return ioutil.WriteFile("keys.json", informationBytes, 0644)
 }
 
 func (vT *visiTracker) InSlice(a string) bool {
@@ -477,7 +477,7 @@ func phoneSMS(phoneWSController *melody.Melody) func(*gin.Context) {
 
 		message := rjWebPhone.addToPhoneConversation(from, body, true)
 
-		err := rjWebPhone.writePhoneData("../phoneData.json")
+		err := rjWebPhone.writePhoneData("phoneData.json")
 
 		if err != nil {
 			fmt.Println(err)
@@ -535,7 +535,7 @@ func makePhoneSMS(phoneWSController *melody.Melody) func(*gin.Context) {
 
 		rjWebPhone.addToPhoneConversation(phoneWSMessage.Number, phoneWSMessage.Message, false)
 
-		err = rjWebPhone.writePhoneData("../phoneData.json")
+		err = rjWebPhone.writePhoneData("phoneData.json")
 
 		if err != nil {
 			fmt.Println(err)
@@ -587,7 +587,7 @@ func index(c *gin.Context) {
 			vT.IPList = append(vT.IPList, ip)
 		}
 		mux.Unlock()
-		go writeStructToJSON(vT, "../numer.json")
+		go writeStructToJSON(vT, "numer.json")
 	}
 
 	executeTemplate(c.Writer, "index.gohtml", vT)
@@ -676,7 +676,7 @@ func init() {
 	httpSessions = make(map[string]bool)
 	resumeRequesters = make(map[string]int)
 
-	fi, err := ioutil.ReadFile("../numer.json")
+	fi, err := ioutil.ReadFile("numer.json")
 
 	if err == nil {
 		json.Unmarshal(fi, &vT)
@@ -700,7 +700,7 @@ func init() {
 		port = information.DevPort
 	}
 
-	rjWebPhone, err = getPhoneData("../phoneData.json")
+	rjWebPhone, err = getPhoneData("phoneData.json")
 
 	if err != nil {
 		rjWebPhone = &rjPhoneManager{Conversations: make(map[string][]Message)}

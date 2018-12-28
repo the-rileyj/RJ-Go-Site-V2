@@ -44,8 +44,8 @@ COPY ./projects .
 COPY ./static .
 COPY ./templates .
 COPY ./*.json .
-COPY ./RJcert.crt .
-COPY ./RJsecret.key .
+COPY ./*.crt .
+COPY ./*.key .
 
 # Remove extra unnessesary *.go files
 RUN rm -r *.go
