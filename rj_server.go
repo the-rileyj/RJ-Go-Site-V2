@@ -803,6 +803,10 @@ func main() {
 		}
 	}*/
 
+	firstRoute := httpRouter.Routes()[0]
+
+	fmt.Println(firstRoute.Handler, firstRoute.Method, firstRoute.Path)
+
 	if certPath != "" && secretPath != "" {
 		// Register redirect route in HTTP router
 		httpRouter.GET("/*path", func(c *gin.Context) {

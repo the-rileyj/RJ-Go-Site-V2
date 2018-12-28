@@ -8,6 +8,7 @@ nohup.out
 *.png
 
 RJserver
+*.yaml
 
 /projects/*
 /static/public/files/*
