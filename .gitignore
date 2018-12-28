@@ -6,12 +6,16 @@ nohup.out
 *.jpg
 *.json
 *.png
+*.crt
+*.key
 
 RJserver
 *.yaml
 
+
 /projects/*
 /static/public/files/*
+/static/public/extra/
 
 !RJglobal.json
 !projects/.gitkeep

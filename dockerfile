@@ -13,7 +13,7 @@ FROM golang:alpine AS buildenv
 # git for getting dependencies residing on github
 RUN apk add --no-cache gcc git musl-dev
 # WORKDIR /app
-ADD ./app/*.go .
+ADD ./*.go .
 # Get dependencies locally, but don't install
 RUN go get -d ./...
 # Compile program with local dependencies
@@ -35,14 +35,24 @@ WORKDIR /app
 RUN apk update && `
     apk add ca-certificates && `
     rm -rf /var/cache/apk/*
+
 # Copy the *.go program compiled in the first stage
 COPY --from=buildenv /go/gogram .
-# Copy the files on our machine in ./app to the container
-COPY ./app .
+
+# Copy the files on our machine container
+COPY ./projects .
+COPY ./static .
+COPY ./templates .
+COPY ./*.json .
+COPY ./RJcert.crt .
+COPY ./RJsecret.key .
+
 # Remove extra unnessesary *.go files
 RUN rm -r *.go
 
-# Expose port 8080 to host machine
-EXPOSE 8080
+# Expose ports 80 and 443 to host machine
+EXPOSE 80
+EXPOSE 443
+
 # Run program
 ENTRYPOINT ./gogram
