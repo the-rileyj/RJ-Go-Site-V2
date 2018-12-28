@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+  rjserver:
+    build: .
+    expose:
+      - "80"
+      - "443:443"
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: always
