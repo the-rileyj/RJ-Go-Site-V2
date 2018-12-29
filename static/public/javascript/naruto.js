@@ -86,10 +86,10 @@ function populateEpisodeOptions(episodes, token) {
 }
 
 function populateEpisodeAdvancedInfo(episode) {
-    axios.get(`https://therileyjohnson.com/api/naruto-api/advanced-episode-info/${episode}`, { headers: { "auth": token } })
+    axios.get(`/api/naruto-api/advanced-episode-info/${episode}`, { headers: { "auth": token } })
         .then((response) => {
             if (response.status === 200) {
-                advancedEpisodeInfo = response.data;
+                advancedEpisodeInfo = response.data.msg;
 
                 $("#narutoError").html(`${advancedEpisodeInfo.newTitle}\n\n${advancedEpisodeInfo.newDescription}`);
 
@@ -125,7 +125,7 @@ $(document).ready(function () {
         axios.get("/api/naruto-api/all-episodes-basic-info", { headers: { "auth": token } })
             .then((response) => {
                 if (response.status === 200) {
-                    episodeInfo = response.data;
+                    episodeInfo = response.data.msg;
 
                     $("#loading").css("display", "none");
                     $("#naruto").css("display", "grid");
@@ -173,7 +173,7 @@ $(document).ready(function () {
                     axios.get("/api/naruto-api/all-episodes-basic-info", { headers: { "auth": token } })
                         .then((response) => {
                             if (response.status === 200) {
-                                episodeInfo = response.data;
+                                episodeInfo = response.data.msg;
 
                                 populateEpisodeOptions(episodeInfo);
                             }
