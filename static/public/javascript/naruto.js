@@ -54,7 +54,7 @@ function populateEpisodeOptions(episodes) {
     let selectEpisodeHTML = "<option disabled selected value> -- select an option -- </option>";
 
     Object.keys(episodes).forEach((key) => {
-        selectEpisodeHTML += `<option value="${key}">Episode ${key}<option>`;
+        selectEpisodeHTML += `<option value="${key}">Episode ${key}</option>`;
     });
 
     $("#narutoList").html(selectEpisodeHTML);
@@ -80,6 +80,8 @@ function populateEpisodeAdvancedInfo(episode) {
                 })
 
                 $("#narutoSelectQuality").unbind("change");
+
+                console.log(qualityMap);
 
                 $("#narutoSelectQuality").on('change', function () {
                     $("#narutoVideo").html(`<source src="${qualityMap[this.value]}" type="video/mp4">`);
