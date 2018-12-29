@@ -882,7 +882,7 @@ func main() {
 
 	// Register any method routes with HTTPS router
 	for route, function := range routes["ANY"] {
-		mainRouter.ANY(route, function)
+		mainRouter.Any(route, function)
 	}
 
 	/*for _, rjProject := range rjGlobal.Projects {
