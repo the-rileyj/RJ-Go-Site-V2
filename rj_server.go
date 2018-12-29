@@ -605,6 +605,10 @@ func makePhoneSMS(phoneWSController *melody.Melody) func(*gin.Context) {
 	}
 }
 
+func naruto(c *gin.Context) {
+	executeTemplate(c.Writer, "naruto.gohtml", vT)
+}
+
 func phone(c *gin.Context) {
 	executeTemplate(c.Writer, "phone.gohtml", vT)
 }
@@ -849,6 +853,7 @@ func main() {
 		"GET": {
 			"/":                index,
 			"/chat":            chat,
+			"/naruto":          naruto,
 			"/phone":           phone,
 			"/ws/chat":         chatWSConnectionHandler,
 			"/ws/phone/:token": authenticatedPhoneGetRoute(phoneWSConnectionHandler),
