@@ -880,6 +880,11 @@ func main() {
 		mainRouter.POST(route, function)
 	}
 
+	// Register any method routes with HTTPS router
+	for route, function := range routes["ANY"] {
+		mainRouter.ANY(route, function)
+	}
+
 	/*for _, rjProject := range rjGlobal.Projects {
 		if rjProject.SitePath != "" {
 			httpsRouter.GET(rjProject.SitePath, func(c *gin.Context) {
