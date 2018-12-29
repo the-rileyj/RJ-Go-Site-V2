@@ -30,7 +30,7 @@
             </div> -->
             <button id="lastVideo">Last Video</button>
             <!-- <video width="100%" id="narutoVideo"></video> -->
-            <iframe width="100%" id="narutoVideo" src=""></iframe>
+            <iframe allowfullscreen width="100%" height="100%" id="narutoVideo" src=""></iframe>
             <button id="nextVideo">Next Video</button>
             <!-- <input placeholder="Phone Number" id="phoneNumber" type="text">
             <input placeholder="message" id="phoneMessage" type="text">
@@ -120,7 +120,7 @@
                     if (response.status === 200) {
                         advancedEpisodeInfo = response.data.msg;
 
-                        $("#narutoError").html(`${advancedEpisodeInfo.itle}`);
+                        $("#narutoError").html(`${advancedEpisodeInfo.title}`);
 
                         $("#narutoVideo").attr("src", advancedEpisodeInfo.iframeLink);
                     }
