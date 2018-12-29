@@ -30,7 +30,7 @@
             </div> -->
             <button id="lastVideo">Last Video</button>
             <!-- <video width="100%" id="narutoVideo"></video> -->
-            <iframe id="narutoVideo" src=""></iframe>
+            <iframe width="100%" id="narutoVideo" src=""></iframe>
             <button id="nextVideo">Next Video</button>
             <!-- <input placeholder="Phone Number" id="phoneNumber" type="text">
             <input placeholder="message" id="phoneMessage" type="text">
@@ -79,40 +79,40 @@
             $("#narutoList").html(selectEpisodeHTML);
         }
 
-        function populateEpisodeAdvancedInfo(episode) {
-            axios.get(`/api/naruto-api/advanced-episode-info/${episode}`, { headers: { "auth": token } })
-                .then((response) => {
-                    if (response.status === 200) {
-                        advancedEpisodeInfo = response.data.msg;
+        // function populateEpisodeAdvancedInfo(episode) {
+        //     axios.get(`/api/naruto-api/advanced-episode-info/${episode}`, { headers: { "auth": token } })
+        //         .then((response) => {
+        //             if (response.status === 200) {
+        //                 advancedEpisodeInfo = response.data.msg;
 
-                        $("#narutoError").html(`${advancedEpisodeInfo.newTitle}\n\n${advancedEpisodeInfo.newDescription}`);
+        //                 $("#narutoError").html(`${advancedEpisodeInfo.newTitle}\n\n${advancedEpisodeInfo.newDescription}`);
 
-                        let qualityOptionsHTML = "";
-                        let qualityMap = Object();
+        //                 let qualityOptionsHTML = "";
+        //                 let qualityMap = Object();
 
-                        $("#narutoVideo").html(`<source src="${advancedEpisodeInfo.episodeVideoInfo[0].url}" type="video/mp4">`);
-                        $("#narutoCurrentQuality").text(advancedEpisodeInfo.episodeVideoInfo[0].quality)
+        //                 $("#narutoVideo").html(`<source src="${advancedEpisodeInfo.episodeVideoInfo[0].url}" type="video/mp4">`);
+        //                 $("#narutoCurrentQuality").text(advancedEpisodeInfo.episodeVideoInfo[0].quality)
 
-                        advancedEpisodeInfo.episodeVideoInfo.forEach((episodeVideoInfo) => {
-                            qualityMap[episodeVideoInfo.quality] = episodeVideoInfo.url
-                            qualityOptionsHTML += `<option value="${episodeVideoInfo.quality}">${episodeVideoInfo.quality}</option>`
-                        })
+        //                 advancedEpisodeInfo.episodeVideoInfo.forEach((episodeVideoInfo) => {
+        //                     qualityMap[episodeVideoInfo.quality] = episodeVideoInfo.url
+        //                     qualityOptionsHTML += `<option value="${episodeVideoInfo.quality}">${episodeVideoInfo.quality}</option>`
+        //                 })
 
-                        $("#narutoSelectQuality").unbind("change");
+        //                 $("#narutoSelectQuality").unbind("change");
 
-                        console.log(qualityMap);
+        //                 console.log(qualityMap);
 
-                        $("#narutoSelectQuality").on('change', function () {
-                            $("#narutoVideo").html(`<source src="${qualityMap[this.value]}" type="video/mp4">`);
-                        });
+        //                 $("#narutoSelectQuality").on('change', function () {
+        //                     $("#narutoVideo").html(`<source src="${qualityMap[this.value]}" type="video/mp4">`);
+        //                 });
 
-                        $("#narutoSelectQuality").html(qualityOptionsHTML)
-                    }
-                })
-                .catch(() => {
-                    $("#narutoError").html("Fetching Episode Video Sources Failed");
-                })
-        }
+        //                 $("#narutoSelectQuality").html(qualityOptionsHTML)
+        //             }
+        //         })
+        //         .catch(() => {
+        //             $("#narutoError").html("Fetching Episode Video Sources Failed");
+        //         })
+        // }
 
         function populateEpisodeAdvancedInfo(episode) {
             axios.get(`/api/naruto-api/get-episode-basic-info/${episode}`, { headers: { "auth": token } })
@@ -122,7 +122,7 @@
 
                         $("#narutoError").html(`${advancedEpisodeInfo.Title}`);
 
-                        $("#narutoVideo").html(`<source src="${advancedEpisodeInfo.IframeLink}" type="video/mp4">`);
+                        $("#narutoVideo").attr("src", advancedEpisodeInfo.IframeLink);
                     }
                 })
                 .catch(() => {
