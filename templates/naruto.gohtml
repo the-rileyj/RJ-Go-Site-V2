@@ -120,9 +120,9 @@
                     if (response.status === 200) {
                         advancedEpisodeInfo = response.data.msg;
 
-                        $("#narutoError").html(`${advancedEpisodeInfo.Title}`);
+                        $("#narutoError").html(`${advancedEpisodeInfo.itle}`);
 
-                        $("#narutoVideo").attr("src", advancedEpisodeInfo.IframeLink);
+                        $("#narutoVideo").attr("src", advancedEpisodeInfo.iframeLink);
                     }
                 })
                 .catch(() => {
