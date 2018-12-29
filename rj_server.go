@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"path"
@@ -421,7 +422,7 @@ func authenticatedPhoneGetRoute(function func(*gin.Context)) func(*gin.Context) 
 	}
 }
 
-func authenticatedPhonePostRoute(function func(*gin.Context)) func(*gin.Context) {
+func authenticatedPostRoute(function func(*gin.Context)) func(*gin.Context) {
 	return func(c *gin.Context) {
 		var token struct {
 			Token string `json:"token"`
@@ -458,6 +459,21 @@ func authenticatedPhonePostRoute(function func(*gin.Context)) func(*gin.Context)
 		} else {
 			c.JSON(400, gin.H{
 				"error": "an error occured",
+			})
+		}
+	}
+}
+
+func authenticatedRoute(handlerFunction func(*gin.Context)) func(*gin.Context) {
+	return func(c *gin.Context) {
+		token := c.Request.Header.Get("auth")
+
+		if token != "" && httpSessions[token] {
+			handlerFunction(c)
+		} else {
+			c.JSON(500, gin.H{
+				"error": true,
+				"msg":   "invalid auth",
 			})
 		}
 	}
@@ -591,6 +607,29 @@ func index(c *gin.Context) {
 	}
 
 	executeTemplate(c.Writer, "index.gohtml", vT)
+}
+
+func newTrimPrefixReverseProxy(target *url.URL, prefix string) *httputil.ReverseProxy {
+	targetHasSlash := strings.HasSuffix(target.Path, "/")
+
+	director := func(req *http.Request) {
+		req.URL.Scheme = target.Scheme
+		req.URL.Host = target.Host
+
+		requestHasSlash := strings.HasPrefix(req.URL.Path, "/")
+
+		switch {
+		case targetHasSlash && requestHasSlash:
+			req.URL.Path = target.Path + req.URL.Path[1:]
+		case !targetHasSlash && !requestHasSlash:
+			req.URL.Path = target.Path + "/" + req.URL.Path
+		default:
+			req.URL.Path = target.Path + req.URL.Path
+		}
+
+		req.URL.Path = strings.TrimPrefix(req.URL.Path, prefix)
+	}
+	return &httputil.ReverseProxy{Director: director}
 }
 
 //ipRange - a structure that holds the start and end of a range of ip addresses
@@ -761,7 +800,16 @@ func main() {
 	// 	phoneWSController.Broadcast(msg)
 	// })
 
+	NarutoAPIReverseProxy := newTrimPrefixReverseProxy(&url.URL{Scheme: "http", Host: "naruto-api", Path: "/"}, "/api/naruto-api")
+
+	handleForwardingToNarutoAPI := func(c *gin.Context) {
+		NarutoAPIReverseProxy.ServeHTTP(c.Writer, c.Request)
+	}
+
 	routes := map[string]map[string]func(*gin.Context){
+		"ANY": {
+			"/api/naruto-api/*path": authenticatedRoute(handleForwardingToNarutoAPI),
+		},
 		"GET": {
 			"/":                index,
 			"/chat":            chat,
@@ -772,8 +820,8 @@ func main() {
 		"POST": {
 			"/phone/login":             authenticatePhone,
 			"/phone/sms":               phoneSMS(phoneWSController),
-			"/phone/make/sms":          authenticatedPhonePostRoute(makePhoneSMS(phoneWSController)),
-			"/phone/get/conversations": authenticatedPhonePostRoute(getPhoneConversations),
+			"/phone/make/sms":          authenticatedPostRoute(makePhoneSMS(phoneWSController)),
+			"/phone/get/conversations": authenticatedPostRoute(getPhoneConversations),
 		},
 	}
 
@@ -810,7 +858,7 @@ func main() {
 	if certPath != "" && secretPath != "" {
 		// Register redirect route in HTTP router
 		httpRouter.GET("/*path", func(c *gin.Context) {
-			c.Redirect(302, "https://therileyjohnson.com/"+c.Param("variable"))
+			c.Redirect(302, "https://therileyjohnson.com/"+c.Param("path"))
 		})
 
 		httpsRouter.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
