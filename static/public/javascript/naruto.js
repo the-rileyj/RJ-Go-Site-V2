@@ -50,33 +50,8 @@ function getCookie(cname) {
     return "";
 }
 
-function populateMessageList(conversations) {
-    let numbersHTML = "";
-
-    for (let phoneNumber in conversations) {
-        numbersHTML += `<option value="${phoneNumber}">${phoneNumber}</option>`
-    }
-
-    $("#messagesList").html(numbersHTML);
-}
-
-function populateMessageOptions(conversations, firstConversation = undefined) {
-    let numbersHTML = "";
-
-    for (let phoneNumber in conversations) {
-        if (firstConversation === undefined)
-            firstConversation = phoneNumber;
-
-        numbersHTML += `<option value="${phoneNumber}">${phoneNumber}</option>`
-    }
-
-    $("#messagesList").html(numbersHTML);
-
-    populateMessageHistory(conversations, firstConversation);
-}
-
-function populateEpisodeOptions(episodes, token) {
-    let selectEpisodeHTML = "";
+function populateEpisodeOptions(episodes) {
+    let selectEpisodeHTML = "<option disabled selected value> -- select an option -- </option>";
 
     Object.keys(episodes).forEach((key) => {
         selectEpisodeHTML += `<option value="${key}">Episode ${key}<option>`;
@@ -146,11 +121,23 @@ $(document).ready(function () {
     }
 
     $("#lastVideo").click(() => {
-        $("#narutoList").val(String(Number($("#narutoList").val()) - 1));
+        let lastVideoNumber = Number($("#narutoList").val()) - 1;
+
+        if (lastVideoNumber > 0) {
+            let lastVideo = String(lastVideoNumber);
+
+            $("#narutoList").val(lastVideo);
+
+            populateEpisodeAdvancedInfo(lastVideo);
+        }
     });
 
     $("#nextVideo").click(() => {
-        $("#narutoList").val(String(Number($("#narutoList").val()) +  1));
+        let nextVideo = String(Number($("#narutoList").val()) + 1);
+
+        $("#narutoList").val(nextVideo);
+
+        populateEpisodeAdvancedInfo(nextVideo);
     });
 
     $("#loginButton").click(() => {
@@ -216,7 +203,8 @@ $(document).ready(function () {
     });
 
     $("#narutoList").on('change', function () {
-        populateEpisodeAdvancedInfo(this.value);
+        if (this.value !== "")
+            populateEpisodeAdvancedInfo(this.value);
     });
 
     function playSound() {
