@@ -69,7 +69,7 @@ function populateEpisodeAdvancedInfo(episode) {
                 $("#narutoError").html(`${advancedEpisodeInfo.newTitle}\n\n${advancedEpisodeInfo.newDescription}`);
 
                 let qualityOptionsHTML = "";
-                let qualityMap = {};
+                let qualityMap = Object();
 
                 $("#narutoVideo").html(`<source src="${advancedEpisodeInfo.episodeVideoInfo[0].url}" type="video/mp4">`);
                 $("#narutoCurrentQuality").text(advancedEpisodeInfo.episodeVideoInfo[0].quality)
