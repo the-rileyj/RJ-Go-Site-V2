@@ -369,6 +369,42 @@ func chat(c *gin.Context) { executeTemplate(c.Writer, "chat.gohtml", vT) }
 // 	c.Writer.Write([]byte("COOL"))
 // }
 
+func handleAuthenticate(c *gin.Context) {
+	var loginInformation struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	defer c.Request.Body.Close()
+
+	err := json.NewDecoder(c.Request.Body).Decode(&loginInformation)
+
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "could not decode payload",
+		})
+		return
+	}
+
+	if loginInformation.Username != information.PhoneUser || loginInformation.Password != information.PhonePass {
+		fmt.Println(loginInformation, information.PhoneUser, information.PhonePass)
+		c.JSON(500, gin.H{
+			"error": "incorrect login information",
+		})
+		return
+	}
+
+	token := getUUID()
+
+	httpSessions[token] = true
+
+	c.SetCookie("token", token, 999, "", "https://therileyjohnson.com", true, false)
+
+	c.JSON(200, gin.H{
+		"token": token,
+	})
+}
+
 func authenticatePhone(c *gin.Context) {
 	var loginInformation struct {
 		Username string `json:"username"`
@@ -818,6 +854,7 @@ func main() {
 			"/ws/phone/:token": authenticatedPhoneGetRoute(phoneWSConnectionHandler),
 		},
 		"POST": {
+			"/login":                   handleAuthenticate,
 			"/phone/login":             authenticatePhone,
 			"/phone/sms":               phoneSMS(phoneWSController),
 			"/phone/make/sms":          authenticatedPostRoute(makePhoneSMS(phoneWSController)),
