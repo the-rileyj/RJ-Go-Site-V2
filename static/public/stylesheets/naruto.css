@@ -79,7 +79,7 @@
     grid-template-rows: 1fr 2fr 2fr 2fr 1fr;
     grid-template-areas:
     " . narutoList narutoList . "
-    ". narutoVideo narutoVideo narutoQualityInformation"
+    ". narutoVideo narutoVideo ."
     "lastVideo narutoVideo narutoVideo nextVideo"
     ". narutoError narutoError .";
     grid-row-gap: 5%;
@@ -95,7 +95,7 @@
     grid-area: narutoVideo;
 }
 
-#narutoQualityInformation {
+/* #narutoQualityInformation {
     display: "grid";
     grid-area: narutoQualityInformation;
     grid-template-columns: 1fr;
@@ -111,7 +111,7 @@
 
 #narutoCurrentQualityInfo {
     grid-area: narutoCurrentQualityInfo;
-}
+} */
 
 #lastVideo {
     grid-area: lastVideo;

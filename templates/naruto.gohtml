@@ -22,12 +22,12 @@
         </div>
         <div id="naruto" style="display: none">
             <select id="narutoList"></select>
-            <div id="narutoQualityInformation">
+            <!-- <div id="narutoQualityInformation">
                 <select id="narutoSelectQuality"></select>
                 <div id="narutoCurrentQualityInfo">
                     Currently: <span id="narutoCurrentQuality">None</span>
                 </div>
-            </div>
+            </div> -->
             <button id="lastVideo">Last Video</button>
             <video width="100%" id="narutoVideo"></video>
             <button id="nextVideo">Next Video</button>
@@ -106,6 +106,22 @@
                         });
 
                         $("#narutoSelectQuality").html(qualityOptionsHTML)
+                    }
+                })
+                .catch(() => {
+                    $("#narutoError").html("Fetching Episode Video Sources Failed");
+                })
+        }
+
+        function populateEpisodeAdvancedInfo(episode) {
+            axios.get(`/api/naruto-api/get-episode-basic-info/${episode}`, { headers: { "auth": token } })
+                .then((response) => {
+                    if (response.status === 200) {
+                        advancedEpisodeInfo = response.data.msg;
+
+                        $("#narutoError").html(`${advancedEpisodeInfo.Title}`);
+
+                        $("#narutoVideo").html(`<source src="${advancedEpisodeInfo.IframeLink}" type="video/mp4">`);
                     }
                 })
                 .catch(() => {
