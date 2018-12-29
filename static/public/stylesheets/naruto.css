@@ -91,8 +91,13 @@
     grid-area: narutoList;
 }
 
-#narutoVideo {
+#narutoEpisodeVideo {
+    align-items: center;
+    display: flex;
     grid-area: narutoVideo;
+    height: 100%;
+    justify-content: center;
+    width: 100%;
 }
 
 /* #narutoQualityInformation {
