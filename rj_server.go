@@ -26,6 +26,10 @@ import (
 	mailgun "gopkg.in/mailgun/mailgun-go.v1"
 )
 
+const (
+	dataDirectory string = "./data/"
+)
+
 type rjFileSystem struct {
 	http.FileSystem
 	root    string
@@ -54,9 +58,11 @@ type rjPhoneManager struct {
 func getUUID() string {
 	var err error
 	var uid uuid.UUID
+
 	for uid, err = uuid.NewV4(); err != nil; {
 		uid, err = uuid.NewV4()
 	}
+
 	return uid.String()
 }
 
@@ -230,7 +236,7 @@ func RjGeneralFileServer(urlPrefix string, fs static.ServeFileSystem) gin.Handle
 
 func getInfo() (info, error) {
 	var information info
-	fi, err := os.Open("keys.json")
+	fi, err := os.Open(path.Join(dataDirectory, "keys.json"))
 
 	if err != nil {
 		return info{}, err
@@ -343,7 +349,7 @@ func writeInfo(information info) error {
 		return err
 	}
 
-	return ioutil.WriteFile("keys.json", informationBytes, 0644)
+	return ioutil.WriteFile(path.Join(dataDirectory, "keys.json"), informationBytes, 0644)
 }
 
 func (vT *visiTracker) InSlice(a string) bool {
@@ -529,7 +535,7 @@ func phoneSMS(phoneWSController *melody.Melody) func(*gin.Context) {
 
 		message := rjWebPhone.addToPhoneConversation(from, body, true)
 
-		err := rjWebPhone.writePhoneData("phoneData.json")
+		err := rjWebPhone.writePhoneData(path.Join(dataDirectory, "phoneData.json"))
 
 		if err != nil {
 			fmt.Println(err)
@@ -587,7 +593,7 @@ func makePhoneSMS(phoneWSController *melody.Melody) func(*gin.Context) {
 
 		rjWebPhone.addToPhoneConversation(phoneWSMessage.Number, phoneWSMessage.Message, false)
 
-		err = rjWebPhone.writePhoneData("phoneData.json")
+		err = rjWebPhone.writePhoneData(path.Join(dataDirectory, "phoneData.json"))
 
 		if err != nil {
 			fmt.Println(err)
@@ -643,7 +649,7 @@ func index(c *gin.Context) {
 			vT.IPList = append(vT.IPList, ip)
 		}
 		mux.Unlock()
-		go writeStructToJSON(vT, "numer.json")
+		go writeStructToJSON(vT, path.Join(dataDirectory, "numer.json"))
 	}
 
 	executeTemplate(c.Writer, "index.gohtml", vT)
@@ -755,7 +761,7 @@ func init() {
 	httpSessions = make(map[string]bool)
 	resumeRequesters = make(map[string]int)
 
-	fi, err := ioutil.ReadFile("numer.json")
+	fi, err := ioutil.ReadFile(path.Join(dataDirectory, "numer.json"))
 
 	if err == nil {
 		json.Unmarshal(fi, &vT)
@@ -779,7 +785,7 @@ func init() {
 		port = information.DevPort
 	}
 
-	rjWebPhone, err = getPhoneData("phoneData.json")
+	rjWebPhone, err = getPhoneData(path.Join(dataDirectory, "phoneData.json"))
 
 	if err != nil {
 		rjWebPhone = &rjPhoneManager{Conversations: make(map[string][]Message)}
@@ -846,6 +852,14 @@ func main() {
 		NarutoAPIReverseProxy.ServeHTTP(c.Writer, c.Request)
 	}
 
+	var mainRouter *gin.Engine
+
+	if certPath != "" && secretPath != "" {
+		mainRouter = httpsRouter
+	} else {
+		mainRouter = httpRouter
+	}
+
 	routes := map[string]map[string]func(*gin.Context){
 		"ANY": {
 			"/api/naruto-api/*path": authenticatedRoute(handleForwardingToNarutoAPI),
@@ -867,27 +881,17 @@ func main() {
 		},
 	}
 
-	var mainRouter *gin.Engine
-
-	if certPath != "" && secretPath != "" {
-		mainRouter = httpsRouter
-	} else {
-		mainRouter = httpRouter
+	methodMap := map[string]func(string, ...gin.HandlerFunc) gin.IRoutes{
+		"ANY":  mainRouter.Any,
+		"GET":  mainRouter.GET,
+		"POST": mainRouter.POST,
 	}
 
-	// Register GET routes with HTTPS router
-	for route, function := range routes["GET"] {
-		mainRouter.GET(route, function)
-	}
-
-	// Register POST routes with HTTPS router
-	for route, function := range routes["POST"] {
-		mainRouter.POST(route, function)
-	}
-
-	// Register any method routes with HTTPS router
-	for route, function := range routes["ANY"] {
-		mainRouter.Any(route, function)
+	// Register various routes with the main router
+	for method, listOfHandlers := range routes {
+		for route, handlerFunc := range listOfHandlers {
+			methodMap[method](route, handlerFunc)
+		}
 	}
 
 	/*for _, rjProject := range rjGlobal.Projects {
