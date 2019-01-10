@@ -41,14 +41,6 @@ COPY --from=buildenv /go/gogram .
 
 RUN mkdir projects && mkdir static && mkdir templates
 
-# Copy the files on our machine container
-# COPY ./projects ./projects/
-# COPY ./static ./static/
-# COPY ./templates ./templates/
-# COPY ./*.json ./
-# COPY ./*.crt ./
-# COPY ./*.key ./
-
 # Expose ports 80 and 443 to host machine
 EXPOSE 80
 EXPOSE 443
