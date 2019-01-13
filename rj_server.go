@@ -508,10 +508,19 @@ func authenticatedPostRoute(function func(*gin.Context)) func(*gin.Context) {
 
 func authenticatedRoute(handlerFunction func(*gin.Context)) func(*gin.Context) {
 	return func(c *gin.Context) {
-		token := c.Request.Header.Get("auth")
+		var token string
 
-		if token == "" {
+		switch {
+		case c.Request.Header.Get("auth") != "":
+			token = c.Request.Header.Get("auth")
+		case c.Query("auth") != "":
 			token = c.Query("auth")
+		default:
+			tokenCookie, err := c.Request.Cookie("token")
+
+			if err == nil {
+				token = tokenCookie.Value
+			}
 		}
 
 		if token != "" && httpSessions[token] {
