@@ -656,6 +656,8 @@ func newTrimPrefixReverseProxy(target *url.URL, prefix string) *httputil.Reverse
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
 
+		req.URL.Path = strings.TrimPrefix(req.URL.Path, prefix)
+
 		requestHasSlash := strings.HasPrefix(req.URL.Path, "/")
 
 		switch {
@@ -666,8 +668,6 @@ func newTrimPrefixReverseProxy(target *url.URL, prefix string) *httputil.Reverse
 		default:
 			req.URL.Path = target.Path + req.URL.Path
 		}
-
-		req.URL.Path = strings.TrimPrefix(req.URL.Path, prefix)
 	}
 	return &httputil.ReverseProxy{Director: director}
 }
@@ -840,7 +840,7 @@ func main() {
 	// 	phoneWSController.Broadcast(msg)
 	// })
 
-	NarutoAPIReverseProxy := newTrimPrefixReverseProxy(&url.URL{Scheme: "http", Host: "naruto-api", Path: "/"}, "/api/naruto-api")
+	NarutoAPIReverseProxy := newTrimPrefixReverseProxy(&url.URL{Scheme: "http", Host: "naruto-api", Path: "/api"}, "/api/naruto-api")
 
 	handleForwardingToNarutoAPI := func(c *gin.Context) {
 		NarutoAPIReverseProxy.ServeHTTP(c.Writer, c.Request)
