@@ -688,7 +688,8 @@ func newTrimPrefixReverseProxy(target *url.URL, prefix string) *httputil.Reverse
 			req.URL.Path = target.Path + req.URL.Path
 		}
 	}
-	return &httputil.ReverseProxy{Director: director}
+
+	return &httputil.ReverseProxy{Director: director, FlushInterval: time.Millisecond * 500}
 }
 
 //ipRange - a structure that holds the start and end of a range of ip addresses
