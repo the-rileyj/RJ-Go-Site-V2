@@ -510,6 +510,10 @@ func authenticatedRoute(handlerFunction func(*gin.Context)) func(*gin.Context) {
 	return func(c *gin.Context) {
 		token := c.Request.Header.Get("auth")
 
+		if token == "" {
+			token = c.Query("auth")
+		}
+
 		if token != "" && httpSessions[token] {
 			handlerFunction(c)
 		} else {
