@@ -23,6 +23,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/olahol/melody"
 	uuid "github.com/satori/go.uuid"
+	"golang.org/x/net/http2"
 	mailgun "gopkg.in/mailgun/mailgun-go.v1"
 )
 
@@ -688,6 +689,8 @@ func newTrimPrefixReverseProxy(target *url.URL, prefix string) *httputil.Reverse
 			req.URL.Path = target.Path + req.URL.Path
 		}
 	}
+
+	http2.ConfigureTransport(http.DefaultTransport.(*http.Transport))
 
 	return &httputil.ReverseProxy{Director: director, FlushInterval: time.Millisecond}
 }
