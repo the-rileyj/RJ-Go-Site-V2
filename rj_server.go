@@ -23,7 +23,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/olahol/melody"
 	uuid "github.com/satori/go.uuid"
-	"golang.org/x/net/http2"
 	mailgun "gopkg.in/mailgun/mailgun-go.v1"
 )
 
@@ -690,9 +689,7 @@ func newTrimPrefixReverseProxy(target *url.URL, prefix string) *httputil.Reverse
 		}
 	}
 
-	http2.ConfigureTransport(http.DefaultTransport.(*http.Transport))
-
-	return &httputil.ReverseProxy{Director: director, FlushInterval: time.Millisecond}
+	return &httputil.ReverseProxy{Director: director}
 }
 
 //ipRange - a structure that holds the start and end of a range of ip addresses
@@ -863,9 +860,19 @@ func main() {
 	// 	phoneWSController.Broadcast(msg)
 	// })
 
-	NarutoAPIReverseProxy := newTrimPrefixReverseProxy(&url.URL{Scheme: "http", Host: "naruto-api", Path: "/api"}, "/api/naruto-api")
-
 	handleForwardingToNarutoAPI := func(c *gin.Context) {
+		NarutoAPIReverseProxy := newTrimPrefixReverseProxy(&url.URL{Scheme: "http", Host: "naruto-api", Path: "/api"}, "/api/naruto-api")
+
+		NarutoAPIReverseProxy.Director = func(req *http.Request) {
+			NarutoAPIReverseProxy.Director(req)
+
+			for key, value := range c.Request.Header {
+				if len(value) != 0 {
+					req.Header.Set(key, value[0])
+				}
+			}
+		}
+
 		NarutoAPIReverseProxy.ServeHTTP(c.Writer, c.Request)
 	}
 
