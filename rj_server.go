@@ -859,7 +859,7 @@ func main() {
 
 	// 	phoneWSController.Broadcast(msg)
 	// })
-	NarutoAPIReverseProxy := newTrimPrefixReverseProxy(&url.URL{Scheme: "http", Host: "naruto-api", Path: "/api"}, "/api/naruto-api")
+	NarutoAPIReverseProxy := newTrimPrefixReverseProxy(&url.URL{Scheme: "http", Host: "localhost:9001", Path: "/api"}, "/api/naruto-api")
 
 	handleForwardingToNarutoAPI := func(c *gin.Context) {
 		NarutoAPIReverseProxy.ServeHTTP(c.Writer, c.Request)

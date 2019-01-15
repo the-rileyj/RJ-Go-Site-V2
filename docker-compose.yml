@@ -1,4 +1,4 @@
-version: "3"
+version: "3.5"
 
 services:
   rjserver:
@@ -6,12 +6,20 @@ services:
     expose:
       - "80"
       - "443"
-    ports:
-      - "80:80"
-      - "443:443"
+    # ports:
+    #   - "80:80"
+    #   - "443:443"
+    network_mode: "host"
+    # networks:
+    #   - rjnet
     restart: always
     volumes:
       - "./data:/app/data"
       - "./projects:/app/projects"
       - "./static:/app/static"
       - "./templates:/app/templates"
+
+# networks:
+#   rjnet:
+#     driver: bridge
+#     name: rjnewsite_default
