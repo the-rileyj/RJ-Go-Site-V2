@@ -69,7 +69,7 @@ function populateEpisodeOptions(episodes) {
 // }
 
 function populateEpisodeAdvancedInfo(episode) {
-    $("#narutoVideo").html(`<source src="/api/naruto-api/get-episode-stream/${episode}?auth=${token}" type="video/mp4">`);
+    // $("#narutoVideo").html(`<source src="/api/naruto-api/get-episode-stream/${episode}?auth=${token}" type="video/mp4">`);
 
     axios.get(`/api/naruto-api/get-episode-basic-info/${episode}`, { headers: { "auth": token } })
         .then((response) => {
@@ -77,6 +77,8 @@ function populateEpisodeAdvancedInfo(episode) {
                 advancedEpisodeInfo = response.data.msg;
 
                 $("#narutoError").html(`${advancedEpisodeInfo.title}`);
+
+                $("#narutoVideo").attr("src", advancedEpisodeInfo.iframeLink);
             }
         })
         .catch(() => {
