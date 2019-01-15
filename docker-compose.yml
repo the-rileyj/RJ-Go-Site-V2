@@ -9,9 +9,15 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    networks:
+      - rjnet
     restart: always
     volumes:
       - "./data:/app/data"
       - "./projects:/app/projects"
       - "./static:/app/static"
       - "./templates:/app/templates"
+
+networks:
+  rjnet:
+    name: rjnewsite_default
