@@ -6,12 +6,11 @@ services:
     expose:
       - "80"
       - "443"
-    # ports:
-    #   - "80:80"
-    #   - "443:443"
-    network_mode: "host"
-    # networks:
-    #   - rjnet
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - rjnet
     restart: always
     volumes:
       - "./data:/app/data"
@@ -19,7 +18,7 @@ services:
       - "./static:/app/static"
       - "./templates:/app/templates"
 
-# networks:
-#   rjnet:
-#     driver: bridge
-#     name: rjnewsite_default
+networks:
+  rjnet:
+    name: rjnewsite_default
+
