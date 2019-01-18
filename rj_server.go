@@ -391,13 +391,13 @@ func handleAuthenticateWithRedirect(c *gin.Context) {
 
 	c.SetCookie("token", token, 999, "", "https://therileyjohnson.com", true, false)
 
-	to, err := url.QueryUnescape(c.Param("to"))
+	// to, err := url.QueryUnescape(c.Param("to"))
 
-	if err != nil {
-		to = c.Param("to")
-	}
+	// if err != nil {
+	// 	to = c.Param("to")
+	// }
 
-	c.Redirect(301, to)
+	tpl.ExecuteTemplate(c.Writer, "index.gohtml", nil)
 }
 
 func handleAuthenticate(c *gin.Context) {
