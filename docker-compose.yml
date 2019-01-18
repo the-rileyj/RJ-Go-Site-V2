@@ -6,9 +6,9 @@ services:
     expose:
       - "80"
       - "443"
-    ports:
-      - "80:80"
-      - "443:443"
+    # ports:
+      # - "80:80"
+      # - "443:443"
     networks:
       - rjnet
     restart: always
@@ -17,6 +17,17 @@ services:
       - "./projects:/app/projects"
       - "./static:/app/static"
       - "./templates:/app/templates"
+
+  # nginx:
+  #   build: ./nginx
+  #   # volumes:
+  #   #   - /home/vrh/docker/myrepo/stack-mongo-golang-vuejs-nginx/nginx-http2/conf/:/etc/nginx/conf.d/
+  #   ports:
+  #     - 80:80
+  #     - 443:443
+  #   networks:
+  #     - rjnet
+  #   restart: always
 
 networks:
   rjnet:
