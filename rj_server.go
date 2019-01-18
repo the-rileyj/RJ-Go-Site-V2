@@ -970,24 +970,24 @@ func main() {
 
 	fmt.Println(firstRoute.Handler, firstRoute.Method, firstRoute.Path)*/
 
-	if certPath != "" && secretPath != "" {
-		// Register redirect route in HTTP router
-		httpRouter.GET("/*path", func(c *gin.Context) {
-			c.Redirect(302, "https://therileyjohnson.com/"+c.Param("path"))
-		})
+	// if certPath != "" && secretPath != "" {
+	// 	// Register redirect route in HTTP router
+	// 	httpRouter.GET("/*path", func(c *gin.Context) {
+	// 		c.Redirect(302, "https://therileyjohnson.com/"+c.Param("path"))
+	// 	})
 
-		httpsRouter.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
+	// 	httpsRouter.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
 
-		go httpsRouter.RunTLS(":443", certPath, secretPath)
+	// 	go httpsRouter.RunTLS(":443", certPath, secretPath)
 
-		fmt.Println("Running http redirect server on", port)
+	// 	fmt.Println("Running http redirect server on", port)
 
-		log.Fatal(httpRouter.Run(port))
-	} else {
-		httpRouter.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
+	// 	log.Fatal(httpRouter.Run(port))
+	// } else {
+	mainRouter.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
 
-		fmt.Println("Running only the http server on", port)
+	fmt.Println("Running only the http server on", port)
 
-		log.Fatal(httpRouter.Run(port))
-	}
+	log.Fatal(mainRouter.Run(port))
+	// }
 }
