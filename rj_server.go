@@ -374,6 +374,25 @@ func chat(c *gin.Context) { executeTemplate(c.Writer, "chat.gohtml", vT) }
 
 // 	c.Writer.Write([]byte("COOL"))
 // }
+func handleAuthenticateWithRedirect(c *gin.Context) {
+	username, password := c.PostForm("username"), c.PostForm("password")
+
+	if username != information.PhoneUser || password != information.PhonePass {
+		tpl.ExecuteTemplate(c.Writer, "auth.gohtml", nil)
+
+		c.Abort()
+
+		return
+	}
+
+	token := getUUID()
+
+	httpSessions[token] = true
+
+	c.SetCookie("token", token, 999, "", "https://therileyjohnson.com", true, false)
+
+	c.Redirect(301, c.Param("to"))
+}
 
 func handleAuthenticate(c *gin.Context) {
 	var loginInformation struct {
@@ -393,10 +412,11 @@ func handleAuthenticate(c *gin.Context) {
 	}
 
 	if loginInformation.Username != information.PhoneUser || loginInformation.Password != information.PhonePass {
-		fmt.Println(loginInformation, information.PhoneUser, information.PhonePass)
+
 		c.JSON(500, gin.H{
 			"error": "incorrect login information",
 		})
+
 		return
 	}
 
@@ -502,6 +522,32 @@ func authenticatedPostRoute(function func(*gin.Context)) func(*gin.Context) {
 			c.JSON(400, gin.H{
 				"error": "an error occured",
 			})
+		}
+	}
+}
+
+func authenticatedRouteWithRedirect(handlerFunction func(*gin.Context)) func(*gin.Context) {
+	return func(c *gin.Context) {
+		var token string
+
+		switch {
+		case c.Request.Header.Get("auth") != "":
+			token = c.Request.Header.Get("auth")
+		case c.Query("auth") != "":
+			token = c.Query("auth")
+		default:
+			tokenCookie, err := c.Request.Cookie("token")
+
+			if err == nil {
+				token = tokenCookie.Value
+			}
+		}
+
+		if token != "" && httpSessions[token] {
+			handlerFunction(c)
+		} else {
+			c.Redirect(301, fmt.Sprintf("https://therileyjohnson.com/auth?to=%s", url.QueryEscape("https://therileyjohnson.com"+c.Request.URL.Path)))
+			c.Abort()
 		}
 	}
 }
@@ -622,6 +668,10 @@ func makePhoneSMS(phoneWSController *melody.Melody) func(*gin.Context) {
 			fmt.Println(err)
 		}
 	}
+}
+
+func auth(c *gin.Context) {
+	executeTemplate(c.Writer, "auth.gohtml", vT)
 }
 
 func naruto(c *gin.Context) {
@@ -865,6 +915,12 @@ func main() {
 		NarutoAPIReverseProxy.ServeHTTP(c.Writer, c.Request)
 	}
 
+	JupyterNotebookReverseProxy := newTrimPrefixReverseProxy(&url.URL{Scheme: "http", Host: "rj-notebook", Path: "/"}, "/jupyter")
+
+	handleForwardingToJupyterNotebook := func(c *gin.Context) {
+		JupyterNotebookReverseProxy.ServeHTTP(c.Writer, c.Request)
+	}
+
 	var mainRouter *gin.Engine
 
 	if certPath != "" && secretPath != "" {
@@ -879,13 +935,16 @@ func main() {
 		},
 		"GET": {
 			"/":                index,
+			"/auth":            auth,
 			"/chat":            chat,
 			"/naruto":          naruto,
+			"/jupyter":         authenticatedRouteWithRedirect(handleForwardingToJupyterNotebook),
 			"/phone":           phone,
 			"/ws/chat":         chatWSConnectionHandler,
 			"/ws/phone/:token": authenticatedPhoneGetRoute(phoneWSConnectionHandler),
 		},
 		"POST": {
+			"/authenticate":            handleAuthenticateWithRedirect,
 			"/login":                   handleAuthenticate,
 			"/phone/login":             authenticatePhone,
 			"/phone/sms":               phoneSMS(phoneWSController),
