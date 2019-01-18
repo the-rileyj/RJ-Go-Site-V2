@@ -854,7 +854,7 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	httpsRouter := gin.Default()
+	// httpsRouter := gin.Default()
 	httpRouter := gin.Default()
 
 	chatWSController := melody.New()
