@@ -2,4 +2,8 @@ FROM nginx:latest
 
 EXPOSE 80
 
+COPY ./data/jupyter.creds /etc
+COPY ./data/RJcert.crt /etc
+COPY ./data/RJsecret.key /etc
+
 COPY nginx.conf /etc/nginx/nginx.conf

@@ -12,10 +12,14 @@ FROM golang:alpine AS buildenv
 # Add gcc and musl-dev for any cgo dependencies, and
 # git for getting dependencies residing on github
 RUN apk add --no-cache gcc git musl-dev
-# WORKDIR /app
-ADD ./*.go .
+
+WORKDIR /go/src/github.com/the-rileyj/RJ-Go-Site-V2
+
+ADD ./rj_server.go .
+
 # Get dependencies locally, but don't install
 RUN go get -d ./...
+
 # Compile program with local dependencies
 RUN go build -o gogram
 
@@ -37,7 +41,7 @@ RUN apk update && `
     rm -rf /var/cache/apk/*
 
 # Copy the *.go program compiled in the first stage
-COPY --from=buildenv /go/gogram .
+COPY --from=buildenv /go/src/github.com/the-rileyj/RJ-Go-Site-V2/gogram .
 
 RUN mkdir projects && mkdir static && mkdir templates
 

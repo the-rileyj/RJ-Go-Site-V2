@@ -18,16 +18,14 @@ services:
       - "./static:/app/static"
       - "./templates:/app/templates"
 
-  # nginx:
-  #   build: ./nginx
-  #   # volumes:
-  #   #   - /home/vrh/docker/myrepo/stack-mongo-golang-vuejs-nginx/nginx-http2/conf/:/etc/nginx/conf.d/
-  #   ports:
-  #     - 80:80
-  #     - 443:443
-  #   networks:
-  #     - rjnet
-  #   restart: always
+  nginx:
+    build: ./nginx
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - rjnet
+    restart: always
 
 networks:
   rjnet:

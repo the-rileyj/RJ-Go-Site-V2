@@ -8,6 +8,7 @@ nohup.out
 *.png
 *.crt
 *.key
+*.creds
 
 RJserver
 *.yaml

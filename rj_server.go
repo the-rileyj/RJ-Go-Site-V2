@@ -910,13 +910,16 @@ func main() {
 		JupyterNotebookReverseProxy.ServeHTTP(c.Writer, c.Request)
 	}
 
-	var mainRouter *gin.Engine
+	// var mainRouter *gin.Engine
 
-	if certPath != "" && secretPath != "" {
-		mainRouter = httpsRouter
-	} else {
-		mainRouter = httpRouter
-	}
+	// NGINX is handling HTTPS, don't need to worry about it
+	mainRouter := httpRouter
+
+	// if certPath != "" && secretPath != "" {
+	// 	mainRouter = httpsRouter
+	// } else {
+	// 	mainRouter = httpRouter
+	// }
 
 	routes := map[string]map[string]func(*gin.Context){
 		"ANY": {
