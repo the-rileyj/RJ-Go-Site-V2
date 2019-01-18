@@ -546,7 +546,7 @@ func authenticatedRouteWithRedirect(handlerFunction func(*gin.Context)) func(*gi
 		if token != "" && httpSessions[token] {
 			handlerFunction(c)
 		} else {
-			c.Redirect(301, fmt.Sprintf("https://therileyjohnson.com/auth?to=%s", url.QueryEscape("https://therileyjohnson.com"+c.Request.URL.Path)))
+			c.Redirect(301, fmt.Sprintf("https://therileyjohnson.com/auth?to=%s", "https://therileyjohnson.com"+c.Request.URL.Path))
 			c.Abort()
 		}
 	}

@@ -86,10 +86,10 @@
 <body>
     {{template "header"}}
     <form id="main" target="/authenticate" method="POST">
-        <div id="loading">
+        <!-- <div id="loading">
             <div id="dualRing"></div>
-        </div>
-        <div id="login" style="display: none">
+        </div> -->
+        <div id="login" style="display: grid">
             <div id="loginResponse"></div>
             <input placeholder="Username" name="username" id="username" type="text">
             <input placeholder="Password" name="password" id="password" type="password">
