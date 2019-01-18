@@ -389,13 +389,7 @@ func handleAuthenticateWithRedirect(c *gin.Context) {
 
 	httpSessions[token] = true
 
-	c.SetCookie("token", token, 999, "", "https://therileyjohnson.com", true, false)
-
-	// to, err := url.QueryUnescape(c.Param("to"))
-
-	// if err != nil {
-	// 	to = c.Param("to")
-	// }
+	c.SetCookie("token", token, 999, "", "", true, false)
 
 	tpl.ExecuteTemplate(c.Writer, "index.gohtml", nil)
 }
@@ -455,7 +449,7 @@ func authenticatePhone(c *gin.Context) {
 	}
 
 	if loginInformation.Username != information.PhoneUser || loginInformation.Password != information.PhonePass {
-		fmt.Println(loginInformation, information.PhoneUser, information.PhonePass)
+
 		c.JSON(400, gin.H{
 			"error": "incorrect login information",
 		})
@@ -476,8 +470,6 @@ func authenticatePhone(c *gin.Context) {
 func authenticatedPhoneGetRoute(function func(*gin.Context)) func(*gin.Context) {
 	return func(c *gin.Context) {
 		token := c.Param("token")
-
-		fmt.Println(httpSessions[token])
 
 		if httpSessions[token] {
 			function(c)
@@ -536,23 +528,16 @@ func authenticatedRouteWithRedirect(handlerFunction func(*gin.Context)) func(*gi
 	return func(c *gin.Context) {
 		var token string
 
-		switch {
-		case c.Request.Header.Get("auth") != "":
-			token = c.Request.Header.Get("auth")
-		case c.Query("auth") != "":
-			token = c.Query("auth")
-		default:
-			tokenCookie, err := c.Request.Cookie("token")
+		tokenCookie, err := c.Request.Cookie("token")
 
-			if err == nil {
-				token = tokenCookie.Value
-			}
+		if err == nil {
+			token = tokenCookie.Value
 		}
 
 		if token != "" && httpSessions[token] {
 			handlerFunction(c)
 		} else {
-			c.Redirect(301, fmt.Sprintf("https://therileyjohnson.com/auth?to=%s", "https://therileyjohnson.com"+c.Request.URL.Path))
+			tpl.ExecuteTemplate(c.Writer, "auth.gohtml", nil)
 			c.Abort()
 		}
 	}
@@ -896,8 +881,6 @@ func main() {
 
 	phoneWSConnectionHandler := func(c *gin.Context) {
 		phoneWSController.HandleRequest(c.Writer, c.Request)
-
-		fmt.Println(phoneWSController.Broadcast([]byte("test")))
 	}
 
 	// phoneWSController.HandleMessage(func(s *melody.Session, msg []byte) {
