@@ -921,7 +921,7 @@ func main() {
 		NarutoAPIReverseProxy.ServeHTTP(c.Writer, c.Request)
 	}
 
-	JupyterNotebookReverseProxy := newTrimPrefixReverseProxy(&url.URL{Scheme: "http", Host: "rj-notebook", Path: "/"}, "/jupyter")
+	JupyterNotebookReverseProxy := newTrimPrefixReverseProxy(&url.URL{Scheme: "http", Host: "rj-notebook:8888", Path: "/"}, "/jupyter")
 
 	handleForwardingToJupyterNotebook := func(c *gin.Context) {
 		JupyterNotebookReverseProxy.ServeHTTP(c.Writer, c.Request)
