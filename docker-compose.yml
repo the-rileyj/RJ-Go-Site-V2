@@ -26,6 +26,8 @@ services:
     networks:
       - rjnet
     restart: always
+    volumes:
+      - "./nginx/logs:/var/log/nginx"
 
 networks:
   rjnet:

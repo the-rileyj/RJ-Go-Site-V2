@@ -13,7 +13,7 @@ nohup.out
 RJserver
 *.yaml
 
-
+/nginx/logs/
 /projects/*
 /static/public/files/*
 /static/public/extra/
