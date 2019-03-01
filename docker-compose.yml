@@ -6,9 +6,6 @@ services:
     expose:
       - "80"
       - "443"
-    # ports:
-      # - "80:80"
-      # - "443:443"
     networks:
       - rjnet
     restart: always
@@ -21,8 +18,8 @@ services:
   nginx:
     build: ./nginx
     ports:
-      - 80:80
-      - 443:443
+      - "80:80"
+      - "443:443"
     networks:
       - rjnet
     restart: always
