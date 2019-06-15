@@ -8,6 +8,9 @@ services:
       - "443"
     networks:
       - rjnet
+    ports:
+      - "80:80"
+      - "443:443"
     restart: always
     volumes:
       - "./data:/app/data"
@@ -15,16 +18,16 @@ services:
       - "./static:/app/static"
       - "./templates:/app/templates"
 
-  nginx:
-    build: ./nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - rjnet
-    restart: always
-    volumes:
-      - "./nginx/logs:/var/log/nginx"
+  # nginx:
+  #   build: ./nginx
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   networks:
+  #     - rjnet
+  #   restart: always
+  #   volumes:
+  #     - "./nginx/logs:/var/log/nginx"
 
 networks:
   rjnet:

@@ -854,7 +854,7 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	// httpsRouter := gin.Default()
+	httpsRouter := gin.Default()
 	httpRouter := gin.Default()
 
 	chatWSController := melody.New()
@@ -916,16 +916,11 @@ func main() {
 		JupyterNotebookReverseProxy.ServeHTTP(c.Writer, c.Request)
 	}
 
-	// var mainRouter *gin.Engine
-
-	// NGINX is handling HTTPS, don't need to worry about it
 	mainRouter := httpRouter
 
-	// if certPath != "" && secretPath != "" {
-	// 	mainRouter = httpsRouter
-	// } else {
-	// 	mainRouter = httpRouter
-	// }
+	if certPath != "" && secretPath != "" {
+		mainRouter = httpsRouter
+	}
 
 	routes := map[string]map[string]func(*gin.Context){
 		"ANY": {
@@ -977,24 +972,23 @@ func main() {
 
 	fmt.Println(firstRoute.Handler, firstRoute.Method, firstRoute.Path)*/
 
-	// if certPath != "" && secretPath != "" {
-	// 	// Register redirect route in HTTP router
-	// 	httpRouter.GET("/*path", func(c *gin.Context) {
-	// 		c.Redirect(302, "https://therileyjohnson.com/"+c.Param("path"))
-	// 	})
+	if certPath != "" && secretPath != "" {
+		// Register redirect route in HTTP router
+		httpRouter.GET("/*path", func(c *gin.Context) {
+			c.Redirect(302, "https://therileyjohnson.com/"+c.Param("path"))
+		})
 
-	// 	httpsRouter.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
+		mainRouter.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
+		httpsRouter.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
 
-	// 	go httpsRouter.RunTLS(":443", certPath, secretPath)
+		go httpsRouter.RunTLS(":443", certPath, secretPath)
 
-	// 	fmt.Println("Running http redirect server on", port)
+		fmt.Println("Running http redirect server on", port)
 
-	// 	log.Fatal(httpRouter.Run(port))
-	// } else {
-	mainRouter.NoRoute(RjServe("/public", NewRjFileSystem("static/public/")))
+		log.Fatal(httpRouter.Run(port))
+	} else {
+		fmt.Println("Running only the http server on", port)
 
-	fmt.Println("Running only the http server on", port)
-
-	log.Fatal(mainRouter.Run(port))
-	// }
+		log.Fatal(mainRouter.Run(port))
+	}
 }
