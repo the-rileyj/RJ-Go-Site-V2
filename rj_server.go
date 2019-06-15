@@ -904,6 +904,12 @@ func main() {
 		NarutoAPIReverseProxy.ServeHTTP(c.Writer, c.Request)
 	}
 
+	GenCyberFrontEndReverseProxy := newTrimPrefixReverseProxy(&url.URL{Scheme: "http", Host: "hyper-threading-file-server", Path: "/"}, "/hyper-threading")
+
+	handleForwardingToGenCyberFrontEnd := func(c *gin.Context) {
+		GenCyberFrontEndReverseProxy.ServeHTTP(c.Writer, c.Request)
+	}
+
 	JupyterNotebookReverseProxy := newTrimPrefixReverseProxy(&url.URL{Scheme: "http", Host: "rj-notebook:8888", Path: "/"}, "/jupyter")
 
 	handleForwardingToJupyterNotebook := func(c *gin.Context) {
@@ -923,7 +929,8 @@ func main() {
 
 	routes := map[string]map[string]func(*gin.Context){
 		"ANY": {
-			"/api/naruto-api/*path": authenticatedRoute(handleForwardingToNarutoAPI),
+			"/api/naruto-api/*path":      authenticatedRoute(handleForwardingToNarutoAPI),
+			"/gen-cyber-front-end/*path": handleForwardingToGenCyberFrontEnd,
 		},
 		"GET": {
 			"/":                index,

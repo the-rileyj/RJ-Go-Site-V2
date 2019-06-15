@@ -4,10 +4,10 @@
 # then transfers the compiled go program and
 # all non-*.go files in ./app to /app in the container
 
-# NOTE: golang:alpine sets WORKDIR to /go,
+# NOTE: golang:1.12.5-alpine3.9 sets WORKDIR to /go,
 # which is why /go/gogram is used to copy the program
 # instead of just /gogram
-FROM golang:alpine AS buildenv
+FROM golang:1.12.5-alpine3.9 AS buildenv
 
 # Add gcc and musl-dev for any cgo dependencies, and
 # git for getting dependencies residing on github
