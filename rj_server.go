@@ -904,7 +904,7 @@ func main() {
 		NarutoAPIReverseProxy.ServeHTTP(c.Writer, c.Request)
 	}
 
-	GenCyberFrontEndReverseProxy := newTrimPrefixReverseProxy(&url.URL{Scheme: "http", Host: "hyper-threading-file-server", Path: "/"}, "/hyper-threading")
+	GenCyberFrontEndReverseProxy := newTrimPrefixReverseProxy(&url.URL{Scheme: "http", Host: "gen-cyber-front-end-server", Path: "/"}, "/gen-cyber-front-end")
 
 	handleForwardingToGenCyberFrontEnd := func(c *gin.Context) {
 		GenCyberFrontEndReverseProxy.ServeHTTP(c.Writer, c.Request)
