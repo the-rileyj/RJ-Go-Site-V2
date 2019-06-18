@@ -904,6 +904,12 @@ func main() {
 		NarutoAPIReverseProxy.ServeHTTP(c.Writer, c.Request)
 	}
 
+	GenCyberBackEndReverseProxy := newTrimPrefixReverseProxy(&url.URL{Scheme: "http", Host: "gen-cyber-back-end-server", Path: "/"}, "/gen-cyber-back-end")
+
+	handleForwardingToGenCyberBackEnd := func(c *gin.Context) {
+		GenCyberBackEndReverseProxy.ServeHTTP(c.Writer, c.Request)
+	}
+
 	GenCyberFrontEndReverseProxy := newTrimPrefixReverseProxy(&url.URL{Scheme: "http", Host: "gen-cyber-front-end-server", Path: "/"}, "/gen-cyber-front-end")
 
 	handleForwardingToGenCyberFrontEnd := func(c *gin.Context) {
@@ -925,6 +931,7 @@ func main() {
 	routes := map[string]map[string]func(*gin.Context){
 		"ANY": {
 			"/api/naruto-api/*path":      authenticatedRoute(handleForwardingToNarutoAPI),
+			"/gen-cyber-back-end/*path":  handleForwardingToGenCyberBackEnd,
 			"/gen-cyber-front-end/*path": handleForwardingToGenCyberFrontEnd,
 		},
 		"GET": {
